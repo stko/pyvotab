@@ -75,14 +75,19 @@ class PyvotabElement(dict):
 		self.startCoord=startCoord
 		self.blockSize=startCoord
 		self.level=level
+		isEnd=False
+		try:
+			self.isEndStup
+			isEnd=True
+		except: # this is no endstup
+			startCoord-=1 # reduce it, so that the return value is the same as the start in case this element and its subs covers only 1 row/column
+
 		for index in sorted(self.keys()):
-			try:
-				self.isEndStup
+			if isEnd:
 				self[index].setPrintCoords(startCoord,level,xDirection)
-				#startCoord+=1
-			except:
-				startCoord=self[index].calPrintCoords(startCoord,level+1,xDirection)
+			else:
 				startCoord+=1
+				startCoord=self[index].calPrintCoords(startCoord,level+1,xDirection)
 		self.blockSize=startCoord-self.blockSize+1
 		return startCoord
 
