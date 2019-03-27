@@ -1,10 +1,11 @@
 from pprint import pprint
 
-class TabDiff(dict):
+class PyvotabElement(dict):
 	
-	def __init__(self,parent,isNew):
+	def __init__(self,parent,isNew,sourceID):
 		self.parent=parent
 		self.dimension=0
+		self.sourceID=sourceID
 		self.oldValue='NaN'
 		self.newValue='NaN'
 		# 0= old, 1= unchanged, 2 = new
@@ -29,10 +30,10 @@ class TabDiff(dict):
 		if self.state!= newState:
 			self.state=1 # marks	 
 	 
-	def add(self,value, isNew):
+	def add(self,value, isNew,sourceID):
 		self.increaseDimension()
 		if not value in self:
-			self[value]= TabDiff(self,isNew)
+			self[value]= PyvotabElement(self,isNew,sourceID)
 			return self[value]
 		else:
 			self[value].validateState(isNew)
@@ -78,11 +79,11 @@ class TabDiff(dict):
 			try:
 				self.isEndStup
 				self[index].setPrintCoords(startCoord,level,xDirection)
-				startCoord+=1
+				#startCoord+=1
 			except:
 				startCoord=self[index].calPrintCoords(startCoord,level+1,xDirection)
-
-		self.blockSize=startCoord-self.blockSize
+				startCoord+=1
+		self.blockSize=startCoord-self.blockSize+1
 		return startCoord
 
 	def depth(self,actLevel):
@@ -99,8 +100,8 @@ class TabDiff(dict):
 
 
 	def fillPrintGridValue(self, multiplier, xDirection,  fillFunction):
-		value="<{0}|{1}> {2}".format(self.oldValue,self.newValue,self.state)
-		fillFunction(value,self.printX,self.printY,xDirection,1)
+		value="'{0}|{1}' ({2})".format(self.oldValue,self.newValue,self.state)
+		fillFunction(value,self.printX,self.printY,xDirection,1,self.sourceID)
 
 	def fillPrintGrid(self, multiplier, xDirection, fillFunction):
 		for index in sorted(self.keys()):
@@ -114,9 +115,9 @@ class TabDiff(dict):
 				self[index].fillPrintGridValue( multiplier, xDirection, fillFunction)
 			else:
 				if xDirection:
-					fillFunction(index,self.level,self[index].startCoord,xDirection,self.blockSize)
+					fillFunction(index,self.level,self[index].startCoord,xDirection,self.blockSize,self.sourceID)
 				else:
-					fillFunction(index,self[index].startCoord,self.level,xDirection,self.blockSize)
+					fillFunction(index,self[index].startCoord,self.level,xDirection,self.blockSize,self.sourceID)
 				self[index].fillPrintGrid( multiplier, xDirection, fillFunction)
 
 	def pprint(self):
@@ -133,15 +134,94 @@ class TabDiff(dict):
 		else:
 			print("<{0}|{1}> {2}.{3}".format(self.oldValue,self.newValue,self.state,self.counter),end='') 
 
+class Pivotab:
+
+	def __init__(self,firstSourceID):
+		self.rowTd=PyvotabElement(None,False,firstSourceID)
+		self.colTd=PyvotabElement(None,False,firstSourceID)
+	
+	def headerrows(self):
+		return self.rowTd.depth(1)
+
+	def headercols(self):
+		return self.colTd.depth(1)
+
+	def insertTable(self,table, splitPoint, state,sourceID):
+		global counter
+		for row in table:
+			rowWidth=len(row)
+			actRowDt=self.rowTd
+			actColDt=self.colTd
+			rowHash=""
+			colHash=""
+			for key, val in enumerate(row):
+				if key == rowWidth-1:
+					rowEndPoint=actRowDt.getEndPoint(colHash) #remember: rows gets colhashes & vice versa
+					colEndPoint=actColDt.getEndPoint(rowHash)
+					if rowEndPoint == None and colEndPoint==None:
+						newEndPoint=PyvotabElement(None,state,sourceID)
+						actRowDt.setEndPoint(newEndPoint,colHash)
+						actColDt.setEndPoint(newEndPoint,rowHash)
+					else:
+						if rowEndPoint == None:
+							newEndPoint=colEndPoint
+							actRowDt.setEndPoint(newEndPoint,colHash)
+						else:
+							newEndPoint=rowEndPoint
+							actColDt.setEndPoint(newEndPoint,rowHash)
+					
+					newEndPoint.MakeValue(val,actRowDt, actColDt,state,counter)
+					counter+=1
+				else:
+					if key < splitPoint:
+						actRowDt=actRowDt.add(val,state,sourceID)
+						rowHash+=":"+val
+					else:
+						actColDt=actColDt.add(val,state,sourceID)
+						colHash+=":"+val
+	
+	def layoutGrid(self):
+		self.rowTd.calPrintCoords(self.colTd.depth(1),0,True)
+		self.colTd.calPrintCoords(self.rowTd.depth(1),0,False)
+
+	def getPrintDict(self):
+		self.ptdict=ptPrintDict()
+		self.rowTd.fillPrintGrid(1, True, self.printfunction)
+		self.colTd.fillPrintGrid(1, False, self.printfunction)
+		return self.ptdict
+
+
+	def printfunction(self,value,px,py,xDirection,blocksize,style):
+		print("print:",value,px,py,xDirection,blocksize)
+		try:
+			self.ptdict[px]
+		except:
+			self.ptdict[px]={}
+		self.ptdict[px][py]={"value":value,"style":style,"size":blocksize,"xDir":xDirection}
+		print("gespeichert:",self.ptdict[px][py])
+		if self.ptdict.xSize<px:
+			self.ptdict.xSize=px
+		if self.ptdict.ySize<py:
+			self.ptdict.ySize=py
+
+
+class ptPrintDict(dict):
+	xSize=0
+	ySize=0
+	
+
+
 t1=[
 	['Hans', 'Mueller', 'Hamburg' , 'Postweg', 8], 
 	['Klaus', 'Meier', 'Hamburg' , 'Feldplatz', 5], 
+	['Klaus', 'Meier', 'Berlin' , 'Burgallee', 4], 
 	['Klaus', 'Schulze', 'Berlin' , 'Burgallee', 3], 
 ]
 
 t2=[
 	['Hins', 'Mueller', 'Hamburg' , 'Postweg', 8], 
 	['Klaus', 'Meier', 'Hamburg' , 'Feldplatz', 5], 
+	['Klaus', 'Meier', 'Berlin' , 'Burgallee', 4], 
 	['Klaus', 'Schulze', 'Berlin' , 'Burgallee', 3], 
 ]
 
@@ -155,88 +235,42 @@ t4=[
 
 counter=1
 
-def insertTable(table, rowDt, colDt, splitPoint, state):
-	global counter
-	for row in table:
-		rowWidth=len(row)
-		actRowDt=rowDt
-		actColDt=colDt
-		rowHash=""
-		colHash=""
-		for key, val in enumerate(row):
-			if key == rowWidth-1:
-				rowEndPoint=actRowDt.getEndPoint(colHash) #remember: rows gets colhashes & vice versa
-				colEndPoint=actColDt.getEndPoint(rowHash)
-				if rowEndPoint == None and colEndPoint==None:
-					newEndPoint=TabDiff(None,state)
-					actRowDt.setEndPoint(newEndPoint,colHash)
-					actColDt.setEndPoint(newEndPoint,rowHash)
-				else:
-					if rowEndPoint == None:
-						newEndPoint=colEndPoint
-						actRowDt.setEndPoint(newEndPoint,colHash)
-					else:
-						newEndPoint=rowEndPoint
-						actColDt.setEndPoint(newEndPoint,rowHash)
-				
-				newEndPoint.MakeValue(val,actRowDt, actColDt,state,counter)
-				counter+=1
-			else:
-				if key < splitPoint:
-					actRowDt=actRowDt.add(val,state)
-					rowHash+=":"+val
-				else:
-					actColDt=actColDt.add(val,state)
-					colHash+=":"+val
 		
-rowTd=TabDiff(None,False)
-colTd=TabDiff(None,False)
+pt=Pivotab("grey")
 	
-insertTable(t1,rowTd,colTd,2,False)	
-insertTable(t2,rowTd,colTd,2,True)	
-#insertTable(t3,rowTd,colTd,2,False)	
-#insertTable(t4,rowTd,colTd,2,True)	
-print("Start------>")
-rowTd.pprint()
-print()
-colTd.pprint()
-print()
+pt.insertTable(t1,2,False,"lightgrey")
+pt.insertTable(t2,2,True,"lightblue")
 
-printArray={}
-maxX=0
-maxY=0
 
-def printfunction(value,px,py,xDirection,blocksize):
-	global printArray
-	global maxX
-	global maxY
-	print("print:",value,px,py,xDirection,blocksize)
-	try:
-		printArray[px]
-	except:
-		printArray[px]={}
-	printArray[px][py]=value
-	print("gespeichert:",printArray[px][py])
-	if maxX<px:
-		maxX=px
-	if maxY<py:
-		maxY=py
 
-rowDepth=rowTd.depth(1)
-colDepth=colTd.depth(1)
+rowDepth=pt.headerrows()
+colDepth=pt.headercols()
 print("rowDepth",rowDepth)
 print("colDepth",colDepth)
-print("y-size:{0}".format(rowTd.calPrintCoords(colDepth,0,True)))
-print("x-size:{0}".format(colTd.calPrintCoords(rowDepth,0,False)))
-rowTd.fillPrintGrid( colDepth, True, printfunction)
-colTd.fillPrintGrid( rowDepth, False, printfunction)
-
-for x in range(maxX+1):
-	for y in range(maxY+1):
+pt.layoutGrid()
+printDict=pt.getPrintDict()
+print("<table>")
+for x in range(printDict.xSize+1):
+	print("<tr>")
+	for y in range(printDict.ySize+1):
 		try:
-			print(printArray[x][y],end='')
+			printDict[x][y]
 		except:
-			pass
-		print("\t",end='')
-		#print(" # ",end='')
-	print()
+			print("<td/> ",end='')
+			continue
+		print("<td ",end='')
+
+		print('style="background-color:',end='')
+		print(printDict[x][y]["style"]+'" ',end='')
+		'''
+		if printDict[x][y]["xDir"]:
+			print('colspan="',end='')
+		else:
+			print('rowspan="',end='')
+		print(str(printDict[x][y]["size"])+'" ',end='')
+		'''
+		print(">",end='')
+
+		print(printDict[x][y]["value"]+"</td>",end='')
+	print("</tr>")
+print("</table>")
