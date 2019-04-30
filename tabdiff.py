@@ -251,6 +251,8 @@ t2 = [
     ['Klaus', 'Meier', 'Hamburg', 'Feldplatz', 5],
     ['Klaus', 'Meier', 'Berlin', 'Burgallee', 4],
     ['Klaus', 'Schulze', 'Berlin', 'Burgallee', 3],
+    ['Klaus', 'Schulze', 'Berlin', 'am Deich', 9],
+    ['Hans', 'Mueller', 'Berlin', 'am Deich', 10],
 ]
 
 t3 = [
