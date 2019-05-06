@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from urllib.parse import urlparse , parse_qs
 import sys
-
+from pprint import pprint
 
 def get_names_by_index(names,param,index_name):
 	result=None
@@ -34,7 +34,14 @@ def translate_pivot_2_csv(multi_index):
 			row_array.append(df_index.levels[row_header_count][label_index])
 		print(row_array)
 		my_data=multi_index.loc[tuple(row_array)]
-		print (my_data)
+		my_data_dict=my_data.to_dict()
+		#pprint (my_data_dict)
+		for key, value in my_data_dict.items():
+			#print(key,value)
+			if not np.isnan(value):
+				for tk in key:
+					pass
+					print (value, tk)
 
 
 
