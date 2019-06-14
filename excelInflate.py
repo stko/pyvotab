@@ -6,18 +6,18 @@ from pprint import pprint
 
 def get_names_by_index(names,param,index_name):
 	result=None
-	print("look for  value ", index_name )
+	#print("look for  value ", index_name )
 	try:
 		index_value=param[index_name][0]
-		print("find ", index_value )
+		#print("find ", index_value )
 		indicies=index_value.split(",")
-		print(indicies)
+		#print(indicies)
 		result=[]
 		for index in indicies:
-			print("add value ",names[int(index)-1]," to ", index_name )
+			#print("add value ",names[int(index)-1]," to ", index_name )
 			result.append(names[int(index)-1])
 	except:
-		print("Exeption")
+		#print("Exeption")
 		pass
 	return result
 
@@ -27,6 +27,7 @@ def translate_pivot_2_csv(multi_index):
 	df_index=multi_index.index
 	nr_of_rows=len(df_index.labels[0])
 	nr_of_row_headers=len(df_index.labels)
+	result_array=[]
 	for row_count in range(nr_of_rows):
 		row_array=[]
 		for row_header_count in range(nr_of_row_headers):
@@ -39,9 +40,16 @@ def translate_pivot_2_csv(multi_index):
 		for key, value in my_data_dict.items():
 			#print(key,value)
 			if not np.isnan(value):
-				for tk in key:
-					pass
-					print (value, tk)
+				#for tk in key:
+				line_array=[]
+				for i in range(1,len(key)):
+					#print (value, key[i])
+					line_array.append(key[i])
+				line_array.append(value)
+				#print(row_array+line_array)
+				result_array.append(row_array+line_array)
+	print(result_array)
+				
 
 
 
