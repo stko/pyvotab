@@ -1,19 +1,27 @@
 from pprint import pprint
+import enum 
+  
+# creating enumerations using class 
+class States(enum.Enum): 
+    old = 0
+    unchanged = 1
+    new = 2
 
 
 class PyvotabElement(dict):
 
-	def __init__(self, parent, isNew, sourceID):
+	def __init__(self, pyvotab, parent, isNew, sourceID):
 		self.parent = parent
 		self.dimension = 0
 		self.sourceID = sourceID
 		self.oldValue = 'NaN'
 		self.newValue = 'NaN'
+		self.pyvotab = pyvotab
 		# 0= old, 1= unchanged, 2 = new
 		if not isNew:
-			self.changeState = 0
+			self.changeState = States.old
 		else:
-			self.changeState = 2
+			self.changeState = States.new
 
 	def increaseDimension(self):
 		self.dimension += 1
@@ -24,16 +32,16 @@ class PyvotabElement(dict):
 		''' recalculates the changeState
 		'''
 
-		if self.changeState == 1:  # signals old and new
+		if self.changeState == States.unchanged:  # signals old and new
 			return
 		# 0= old, 1= unchanged, 2 = new
 		if not isNew:
-			newChangeState = 0
+			newChangeState = States.old
 		else:
-			newChangeState = 2
+			newChangeState = States.new
 		if self.changeState != newChangeState:
 			print("changeState change:", self.changeState, newChangeState)
-			self.changeState = 1  # marks
+			self.changeState = States.unchanged  # marks
 
 	def get_changeState(self):
 		''' returns node changeState '''
@@ -57,7 +65,7 @@ class PyvotabElement(dict):
 			self.sourceID = sourceID
 		self.increaseDimension()
 		if not value in self:
-			self[value] = PyvotabElement(self, isNew, sourceID)
+			self[value] = PyvotabElement(self.pyvotab,self, isNew, sourceID)
 			return self[value]
 		else:
 			self[value].validateChangeState(isNew)
@@ -84,9 +92,9 @@ class PyvotabElement(dict):
 			self.newValue = value
 			print("changeState change state from:", self.changeState, "for value ", value)
 			if self.oldValue != value:
-				self.changeState = 2
+				self.changeState = States.new
 			else:
-				self.changeState = 1
+				self.changeState = States.unchanged
 			print("changeState change state to:", self.changeState)
 		else:
 			self.oldValue = value
@@ -215,10 +223,15 @@ class PyvotabElement(dict):
 		
 		value = "'{0}|{1}' ({2})".format(
 				self.oldValue, self.newValue, self.changeState)
+		this_style=self.sourceID
+		if self.changeState == States.old:
+			this_style = self.pyvotab.old_style
+		if self.changeState == States.new:
+			this_style = self.pyvotab.new_style
 		fillFunction(value, self.printX, self.printY,
-					 xDirection, 1, self.sourceID)
+					 xDirection, 1, this_style)
 
-	def fillPrintGrid(self, multiplier, xDirection, fillFunction, old_style):
+	def fillPrintGrid(self, multiplier, xDirection, fillFunction):
 		'''
 		calculates output table content and dimensions
 
@@ -230,8 +243,6 @@ class PyvotabElement(dict):
 			tells, if the object is located in the column header (True) or row header (False)
 		fillFunction : function
 			function which copies the content into the custom table
-		old_style
-			style object to "style" old content
 		'''
 
 		for index in sorted(self.keys()):
@@ -246,10 +257,11 @@ class PyvotabElement(dict):
 					multiplier, xDirection, fillFunction)
 			else:
 				# determine correct style based on, if the element is old or not
-				if self[index].changeState == 0:
-					this_style = old_style
-				else:
-					this_style = self[index].sourceID
+				this_style = self[index].sourceID
+				if self[index].changeState == States.old:
+					this_style = self.pyvotab.old_style
+				if self[index].changeState == States.new:
+					this_style = self.pyvotab.new_style
 				value = "'{0}' ({1})".format(index, self[index].get_changeState())
 
 				if xDirection:
@@ -259,7 +271,7 @@ class PyvotabElement(dict):
 					fillFunction(
 						value, self[index].startCoord, self.level, xDirection, self.blockSize, this_style)
 				self[index].fillPrintGrid(
-					multiplier, xDirection, fillFunction, old_style)
+					multiplier, xDirection, fillFunction)
 
 	def pprint(self):
 		''' debug print
@@ -269,9 +281,9 @@ class PyvotabElement(dict):
 		if self:
 			for key, value in self.items():
 				print("{{'{0}'".format(hex(id(value))), end='')
-				if value.changeState == 0:
+				if value.changeState == States.old:
 					print("-", end="")
-				if value.changeState == 2:
+				if value.changeState == States.new:
 					print("+", end="")
 				print(": ", end='')
 				value.pprint()
@@ -283,11 +295,12 @@ class PyvotabElement(dict):
 
 class Pyvotab:
 
-	def __init__(self, old_style, new_style):
-		self.rowTd = PyvotabElement(None, False, -1)
-		self.colTd = PyvotabElement(None, False, -1)
+	def __init__(self, old_style, new_style, change_style):
+		self.rowTd = PyvotabElement(self,None, False, -1)
+		self.colTd = PyvotabElement(self,None, False, -1)
 		self.old_style = old_style
 		self.new_style = new_style
+		self.change_style = change_style
 
 	def headerrows(self):
 		'''returns the number of cells  on top of the resulting table, before the data cells starts
@@ -337,7 +350,7 @@ class Pyvotab:
 					rowEndPoint = actRowDt.getEndPoint(colHash)
 					colEndPoint = actColDt.getEndPoint(rowHash)
 					if rowEndPoint == None and colEndPoint == None:
-						newEndPoint = PyvotabElement(None, changeState, sourceID)
+						newEndPoint = PyvotabElement(self,None, changeState, sourceID)
 						actRowDt.setEndPoint(newEndPoint, colHash)
 						actColDt.setEndPoint(newEndPoint, rowHash)
 					else:
@@ -372,8 +385,8 @@ class Pyvotab:
 		'''
 
 		self.ptdict = ptPrintDict()
-		self.rowTd.fillPrintGrid(1, True, self.printfunction, self.old_style)
-		self.colTd.fillPrintGrid(1, False, self.printfunction, self.old_style)
+		self.rowTd.fillPrintGrid(1, True, self.printfunction)
+		self.colTd.fillPrintGrid(1, False, self.printfunction)
 		return self.ptdict
 
 	def printfunction(self, value, px, py, xDirection, blocksize, style):
