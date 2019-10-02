@@ -33,7 +33,7 @@ class Main(object):
 		self.ui.file_list_listView.setModel(self.entry)
 		self.ui.file_list_listView.clicked[QtCore.QModelIndex].connect(self.on_clicked)      
 
-
+		self.tlist = []
 		self.itemOld = QtGui.QStandardItem("text")
 		self.firstClick = False  #Bugfix fuer Up-Down-Button bevor ein Element ausgewaehlt wurde
 		
@@ -148,7 +148,6 @@ class Main(object):
 		item = QtGui.QStandardItem()
 		self.ui.excel_tabWidget.clear()
 		indexnr = self.index.row()
-		tlist = []
 		red=QtGui.QBrush(QtGui.QColor(255, 0, 0)) 
 		green=QtGui.QBrush(QtGui.QColor(0, 255, 0)) 
 		orange=QtGui.QBrush(QtGui.QColor(255, 165, 0)) 
@@ -171,7 +170,7 @@ class Main(object):
 				if(ele.startswith("pt.")):
 					isInList = False
 					
-					for tupl in tlist:
+					for tupl in self.tlist:
 						if(tupl[0] == ele):
 							pt = tupl[1]
 							#print(ele)
@@ -180,7 +179,7 @@ class Main(object):
 						
 					if isInList == False:
 						pt = Pyvotab(red,green,blue) #green
-						tlist.append((ele, pt))
+						self.tlist.append((ele, pt))
 						
 					df1 = pd.read_excel (df, ele)	
 						
@@ -193,8 +192,8 @@ class Main(object):
 						pt.insertTable(df1.as_matrix(), 2, True, orange)
 		
 		
-		for l in range(len(tlist)):
-			pt = tlist[l][1]
+		for l in range(len(self.tlist)):
+			pt = self.tlist[l][1]
 			pt.layoutGrid()
 			list = pt.getPrintDict()	
 				
@@ -207,11 +206,11 @@ class Main(object):
 						item = QtGui.QStandardItem(str(list[i][j]["value"]))
 						item.setBackground(list[i][j]["style"])
 						self.tableview.setItem(i, j, item)
-					except:
+					except KeyError:
 						pass
 					
 				
-			tele = tlist[l]	
+			tele = self.tlist[l]	
 			self.add_Tab(tele[0])
 	
 				
@@ -227,13 +226,36 @@ class Main(object):
 			#print(fileName)
 	
 	def excelsave(self, filename):
-		
-		
-		df = pd.DataFrame({'a':[1,3,5,7,4,5,6,4,7,8,9],
-				   'b':[3,5,6,2,4,6,7,8,7,8,9]})
-
+		#self.ui.excel_page_tableView
 		writer = ExcelWriter(filename+".xlsx")
-		df.to_excel(writer,'Sheet1',index=False)
+		
+		for l in range(len(self.tlist)):
+			pt = self.tlist[l][1]
+			pt.layoutGrid()
+			list = pt.getPrintDict()		
+			header = list[0]
+			
+			for i in range(1,len(list)):
+				for j in range(len(list[i])):
+					try:
+						list[i][j]= str(list[i][j]["value"])
+					except KeyError:
+						list[i][j]="0"
+						pass
+					
+		
+			df = pd.DataFrame(list)
+			df.to_excel(writer,self.tlist[l][0],index=False)
+			worksheet = writer.sheets[self.tlist[l][0]]
+			for idx, col in enumerate(df):  # loop through all columns
+				series = df[col]
+				max_len = max((
+					series.astype(str).map(len).max(),  # len of largest item
+					len(str(series.name))  # len of column name/header
+					)) + 1  # adding a little extra space
+				worksheet.set_column(idx, idx, max_len)  # set column width
+			
+			
 		writer.save()
 	
 	def show(self):
