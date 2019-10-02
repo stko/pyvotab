@@ -119,9 +119,6 @@ class Ui_MainWindow(object):
         self.excel_page_tableView.setObjectName("excel_page_tableView")
         self.gridLayout.addWidget(self.excel_page_tableView, 0, 0, 1, 1)
         self.excel_tabWidget.addTab(self.tab, "")
-        self.tab_2 = QtWidgets.QWidget()
-        self.tab_2.setObjectName("tab_2")
-        self.excel_tabWidget.addTab(self.tab_2, "")
         self.verticalLayout_4.addWidget(self.excel_tabWidget)
         self.save_file_pushButton = QtWidgets.QPushButton(self.layoutWidget2)
         self.save_file_pushButton.setObjectName("save_file_pushButton")
@@ -151,7 +148,6 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "Layout Expression"))
         self.calculate_pushButton.setText(_translate("MainWindow", "Calculate"))
         self.excel_tabWidget.setTabText(self.excel_tabWidget.indexOf(self.tab), _translate("MainWindow", "Tab 1"))
-        self.excel_tabWidget.setTabText(self.excel_tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Page"))
         self.save_file_pushButton.setText(_translate("MainWindow", "Save as..."))
 
 

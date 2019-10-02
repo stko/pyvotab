@@ -345,6 +345,7 @@ class Pyvotab:
 			rowHash = ""
 			colHash = ""
 			for key, val in enumerate(row):
+				val=str(val)
 				if key == rowWidth-1:
 					# remember: rows gets colhashes & vice versa
 					rowEndPoint = actRowDt.getEndPoint(colHash)
