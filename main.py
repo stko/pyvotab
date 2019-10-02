@@ -10,7 +10,9 @@ from pandas import ExcelFile
 from pyvotab import Pyvotab
 from ptViewer_ui import Ui_MainWindow
 
-	
+#TODO
+#matrix anpassen farbe,header
+#tabs speichern	
 class Main(object):
 
 	def __init__(self,args):
@@ -226,36 +228,44 @@ class Main(object):
 			#print(fileName)
 	
 	def excelsave(self, filename):
-		#self.ui.excel_page_tableView
-		writer = ExcelWriter(filename+".xlsx")
+		if(".xls" in filename):
+			writer = ExcelWriter(filename)
+		else:
+			writer = ExcelWriter(filename+".xlsx")
 		
-		for l in range(len(self.tlist)):
-			pt = self.tlist[l][1]
-			pt.layoutGrid()
-			list = pt.getPrintDict()		
-			header = list[0]
+		qitemmodel = self.tableview
+		#list = [["" for x in range(qitemmodel.rowCount())] for y in range(qitemmodel.columnCount())]
+		list = []
+		for i in range(qitemmodel.rowCount()):
+			try:
+				list[i] = list[i]
+			except:
+				list.append([])
+				pass
+				
+			for j in range(qitemmodel.columnCount()):
+				try:
+					list[i][j] = qitemmodel.item(i,j).text()
+				except IndexError:
+					list[i].append(qitemmodel.item(i,j).text())
+				except:	
+					list[i].append("")
+					pass
+				
 			
-			for i in range(1,len(list)):
-				for j in range(len(list[i])):
-					try:
-						list[i][j]= str(list[i][j]["value"])
-					except KeyError:
-						list[i][j]="0"
-						pass
-					
+
+		df = pd.DataFrame(list)
+		df.to_excel(writer,"s1",index=False)
+		worksheet = writer.sheets["s1"]
+		for idx, col in enumerate(df):  # loop through all columns
+			series = df[col]
+			max_len = max((
+				series.astype(str).map(len).max(),  # len of largest item
+				len(str(series.name))  # len of column name/header
+				)) + 1  # adding a little extra space
+			worksheet.set_column(idx, idx, max_len)  # set column width
 		
-			df = pd.DataFrame(list)
-			df.to_excel(writer,self.tlist[l][0],index=False)
-			worksheet = writer.sheets[self.tlist[l][0]]
-			for idx, col in enumerate(df):  # loop through all columns
-				series = df[col]
-				max_len = max((
-					series.astype(str).map(len).max(),  # len of largest item
-					len(str(series.name))  # len of column name/header
-					)) + 1  # adding a little extra space
-				worksheet.set_column(idx, idx, max_len)  # set column width
-			
-			
+		
 		writer.save()
 	
 	def show(self):
