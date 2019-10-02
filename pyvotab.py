@@ -292,10 +292,8 @@ class PyvotabElement(dict):
 			print("<{0}|{1}> {2}".format(self.oldValue,
 										 self.newValue, self.changeState), end='')
 
-
-class Pyvotab:
-
-	def __init__(self, old_style, new_style, change_style):
+class SingleTab:
+	def __init__(self,old_style, new_style, change_style):
 		self.rowTd = PyvotabElement(self,None, False, -1)
 		self.colTd = PyvotabElement(self,None, False, -1)
 		self.old_style = old_style
@@ -315,6 +313,51 @@ class Pyvotab:
 		'''
 
 		return self.colTd.depth(1)
+
+	def layoutGrid(self):
+		''' starts the process to transform the data tree into their table position and sizes
+
+		'''
+
+		self.rowTd.calPrintCoords(self.colTd.depth(1), 0, True)
+		self.colTd.calPrintCoords(self.rowTd.depth(1), 0, False)
+
+	def getPrintDict(self):
+		''' translates the internal data tree structure with it's calculated x/y positions (by layoutgrid()) into its x/y table representation for printout
+
+		'''
+		self.ptdict = ptPrintDict()
+		self.rowTd.fillPrintGrid(1, True, self.printfunction)
+		self.colTd.fillPrintGrid(1, False, self.printfunction)
+
+	def printfunction(self, value, px, py, xDirection, blocksize, style):
+		'''
+			storage function to fill the result ptPrintDict- Table by the x/y coords, the value, the cell direction, the row/col span and the wanted style
+		'''
+
+		print("print:", value, px, py, xDirection, blocksize)
+		try:
+			self.ptdict[px]
+		except:
+			self.ptdict[px] = {}
+		self.ptdict[px][py] = {
+			"value": value, "style": style, "size": blocksize, "xDir": xDirection}
+		print("gespeichert:", self.ptdict[px][py])
+		if self.ptdict.xSize < px:
+			self.ptdict.xSize = px
+		if self.ptdict.ySize < py:
+			self.ptdict.ySize = py
+
+
+
+class Pyvotab:
+
+	def __init__(self, old_style, new_style, change_style):
+		self.result_tables={}
+		self.old_style = old_style
+		self.new_style = new_style
+		self.change_style = change_style
+
 
 	def insertTable(self, table, splitPoint, changeState, sourceID):
 		'''
@@ -371,41 +414,96 @@ class Pyvotab:
 						actColDt = actColDt.add(val, changeState, sourceID)
 						colHash += ":"+val
 
-	def layoutGrid(self):
-		''' starts the process to transform the data tree into their table position and sizes
+	def newInsertTable(self, table, page, layout, changeState, sourceID):
+
+######    newInsertTable( t5, page, { 'rows' : [3, 4 ], 'cols' : [1, 2], 'val' : 5 , 'filter': None, 'pivot': 'plain'}, False, "orange")
+
 
 		'''
+		transforms a "csv-like" table input into the internal tree representation.
 
-		self.rowTd.calPrintCoords(self.colTd.depth(1), 0, True)
-		self.colTd.calPrintCoords(self.rowTd.depth(1), 0, False)
+		Into a data row, the first cells represents the row values, the remaining ones
+		represent the col content, the last value is the table cell content itself.
 
+		The splitPoint value defines the row array index where the row values ends
+		and the col values begins
+
+		Parameters
+		----------
+		table : list
+			array of data rows. the first row contains the column names 
+			page: int or string
+				If int, it's define the column which should be used as page. If string, it's handled as single page, refered py the page name
+		layout : dict
+			contains the layout parameters, which are
+					as result there's a array of tables calculated, indexed by page names
+				rows: Array of int
+					defines the column indices which shall be used as rows
+				cols: Array of int
+					defines the column indices which shall be used as columns
+				filter: 
+					no idea for now, reserved for later extensions :-)
+				pivot: string
+					defines the pivot calculation method. 'plain' is the standard value for no special operation
+		changeState : bool
+			True, if that table is seen as a new input, otherways seen as old, original data
+		sourceID
+			identifier of the data source. Not used by program, but maintained as reference
+			to tell the user where the resulting table cells are coming from
+		'''
+		headers=table[0]
+		for row in table[1:]:
+			rowWidth = len(row)
+			rowHash = ""
+			colHash = ""
+			# is the page an int or a string, so single page or multipage
+			if type(page) is int:
+				page_name=row[page-1]
+			else:
+				page_name=str(page)
+			# does that page table already exist?
+			if not page_name in self.result_tables:
+				self.result_tables[page_name]=SingleTab(self.old_style, self.new_style, self.change_style)
+			this_tab=self.result_tables[page_name]
+			actRowDt = this_tab.rowTd
+			actColDt = this_tab.colTd
+			for index in layout['rows']:
+				val=str(row[index-1])
+				actRowDt = actRowDt.add(val, changeState, sourceID)
+				rowHash += ":"+val
+			for index in layout['cols']:
+				val=str(row[index-1])
+				actColDt = actColDt.add(val, changeState, sourceID)
+				colHash += ":"+val
+			# store the value as endpoint
+			# remember: rows gets colhashes & vice versa
+			rowEndPoint = actRowDt.getEndPoint(colHash)
+			colEndPoint = actColDt.getEndPoint(rowHash)
+			if rowEndPoint == None and colEndPoint == None:
+				newEndPoint = PyvotabElement(self, None, changeState, sourceID)
+				actRowDt.setEndPoint(newEndPoint, colHash)
+				actColDt.setEndPoint(newEndPoint, rowHash)
+			else:
+				if rowEndPoint == None:
+					newEndPoint = colEndPoint
+					actRowDt.setEndPoint(newEndPoint, colHash)
+				else:
+					newEndPoint = rowEndPoint
+					actColDt.setEndPoint(newEndPoint, rowHash)
+
+			newEndPoint.MakeValue(
+				str(row[layout['val']-1]), actRowDt, actColDt, changeState)
 	def getPrintDict(self):
 		''' translates the internal data tree structure with it's calculated x/y positions (by layoutgrid()) into its x/y table representation for printout
 
 		'''
 
-		self.ptdict = ptPrintDict()
-		self.rowTd.fillPrintGrid(1, True, self.printfunction)
-		self.colTd.fillPrintGrid(1, False, self.printfunction)
-		return self.ptdict
-
-	def printfunction(self, value, px, py, xDirection, blocksize, style):
-		'''
-			storage function to fill the result ptPrintDict- Table by the x/y coords, the value, the cell direction, the row/col span and the wanted style
-		'''
-
-		print("print:", value, px, py, xDirection, blocksize)
-		try:
-			self.ptdict[px]
-		except:
-			self.ptdict[px] = {}
-		self.ptdict[px][py] = {
-			"value": value, "style": style, "size": blocksize, "xDir": xDirection}
-		print("gespeichert:", self.ptdict[px][py])
-		if self.ptdict.xSize < px:
-			self.ptdict.xSize = px
-		if self.ptdict.ySize < py:
-			self.ptdict.ySize = py
+		result={}
+		for page_name,stab in self.result_tables.items():
+			stab.layoutGrid()
+			stab.getPrintDict()
+			result[page_name]=stab.ptdict
+		return result
 
 
 class ptPrintDict(dict):
