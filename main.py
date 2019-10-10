@@ -142,19 +142,49 @@ class Main(object):
 				self.ui.file_list_listView.setCurrentIndex(self.entry.item(row).index())
 				self.index = self.entry.item(row).index()
 				self.showMatrix(self.entry.item(row))
+				
+	def convertToInt(self, list):
+		for i in range(len(list)):
+			list[i] = int(list[i])
+		
+		return list		
 			
 	def calculate(self):
 		if(not self.firstClick):
 			return
+			
+		if(not self.ui.expression_lineEdit.text()):
+			self.ui.label_2.setText("Wrong or no input in field. Use position numbers for: Sheet, {Rows}*, {Columns}*, value")
+			return
+		
+		inputtext = self.ui.expression_lineEdit.text()
+		inputlist = inputtext.split(',')
+
+		if(len(inputlist) != 4):
+			self.ui.label_2.setText("Wrong or no input in field. Use position numbers for: Sheet, {Rows}*, {Columns}*, value")
+			return
+		# a, 3 4 , 1 2, 5 
+		try:
+			inputlist[0] = int(inputlist[0])
+		except:
+			pass
+		
+		inputlist[1] = self.convertToInt(inputlist[1].strip().split(' '))
+		inputlist[2] = self.convertToInt(inputlist[2].strip().split(' '))
+		inputlist[3] = int(inputlist[3])
 		
 		item = QtGui.QStandardItem()
 		self.ui.excel_tabWidget.clear()
+		self.tlist.clear()
 		indexnr = self.index.row()
-		red=QtGui.QBrush(QtGui.QColor(255, 0, 0)) 
-		green=QtGui.QBrush(QtGui.QColor(0, 255, 0)) 
-		orange=QtGui.QBrush(QtGui.QColor(255, 165, 0)) 
-		blue=QtGui.QBrush(QtGui.QColor(0, 0, 255)) 
-		black=QtGui.QBrush(QtGui.QColor(0, 0, 0)) 
+		red={'internal_style':QtGui.QBrush(QtGui.QColor(255, 0, 0)),'excel_style':None} 
+		green={'internal_style':QtGui.QBrush(QtGui.QColor(0, 255, 0)) ,'excel_style':None} 
+		orange={'internal_style':QtGui.QBrush(QtGui.QColor(255, 165, 0)) ,'excel_style':None} 
+		blue={'internal_style':QtGui.QBrush(QtGui.QColor(0, 0, 255)) ,'excel_style':None} 
+		black={'internal_style':QtGui.QBrush(QtGui.QColor(0, 0, 0)) ,'excel_style':None} 
+		'''
+		Beginn der Ausfuehrung
+		'''
 		
 		#für jeden dateipfad der liste
 		for i in range(self.entry.rowCount()):
@@ -165,55 +195,58 @@ class Main(object):
 			df = pd.ExcelFile(citem.text())	
 			
 			#für jedes sheet des dateipfads
-			for ele in df.sheet_names:
+			for excelSheetname in df.sheet_names:
 				pt = 0
 			
 				#wenn dateipfad den sheet pt. ... enthält
-				if(ele.startswith("pt.")):
+				if(excelSheetname.startswith("pt.")):
 					isInList = False
 					
+					#überprüfen ob pt. bereits in der tlist befindet 
 					for tupl in self.tlist:
-						if(tupl[0] == ele):
+						if(tupl[0] == excelSheetname):
 							pt = tupl[1]
-							#print(ele)
 							isInList = True
 							break
 						
-					if isInList == False:
-						pt = Pyvotab(red,green,blue) #green
-						self.tlist.append((ele, pt))
+					#wenn der pt. sheet noch nicht in der Liste tlist ist	
+					if (isInList == False): 
+						pt = Pyvotab(red,green,blue) 
+						self.tlist.append((excelSheetname, pt))
 						
-					df1 = pd.read_excel (df, ele)	
+					#den pt sheet des dateipfades auslesen 	
+					df1 = pd.read_excel (df, excelSheetname)
+					matrixlist = df1.as_matrix().tolist()
+					matrixlist.insert(0, list(df1))
 						
 					#wenn die dateipfäde älter sind als der markierte dateipfad der liste
 					if(citem.index().row() < indexnr):
-						#print(citem.text()+" "+ele+" False")
-						pt.insertTable(df1.as_matrix(), 2, False, orange)
+						pt.newInsertTable( matrixlist, inputlist[0] , { 'rows' : inputlist[1], 'cols' : inputlist[2], 'val' : inputlist[3] , 'filter': None, 'pivot': 'plain'}, False, orange)
 					else:
-						#print(citem.text()+" "+ele+" True")
-						pt.insertTable(df1.as_matrix(), 2, True, orange)
+						pt.newInsertTable( matrixlist, inputlist[0] , { 'rows' : inputlist[1], 'cols' : inputlist[2], 'val' : inputlist[3] , 'filter': None, 'pivot': 'plain'}, True, orange)
 		
-		
+		#für jeden ausgelesenen pt. sheet mit pyvotab in tlist
 		for l in range(len(self.tlist)):
 			pt = self.tlist[l][1]
-			pt.layoutGrid()
-			list = pt.getPrintDict()	
-				
-			header = list[0]
-			self.tableview= QtGui.QStandardItemModel(len(list),len(header)-1) # zeile, spalte
+			ptlist = pt.getPrintDict()		
+			
+			self.tableview= QtGui.QStandardItemModel() # zeile, spalte
 			#self.tableview.setHorizontalHeaderLabels(header)
-			for i in range(len(list)):
-				for j in range(len(list[i])):
-					try:
-						item = QtGui.QStandardItem(str(list[i][j]["value"]))
-						item.setBackground(list[i][j]["style"])
-						self.tableview.setItem(i, j, item)
-					except KeyError:
-						pass
+			for sheetname, ptele in ptlist.items():
+				self.tableview= QtGui.QStandardItemModel() # zeile, spalte
+				for i in range(ptele.xSize+1):
+					for j in range(ptele.ySize+1):
+						try:
+							item = QtGui.QStandardItem(str(ptele[i][j]["value"]))
+							item.setBackground(ptele[i][j]["style"]['internal_style'])
+							self.tableview.setItem(i, j, item)
+						except KeyError:
+							pass
 					
 				
-			tele = self.tlist[l]	
-			self.add_Tab(tele[0])
+				#tele = self.tlist[l]	
+				#self.add_Tab(tele[0])
+				self.add_Tab(sheetname)
 	
 				
 	def saveAs(self):
