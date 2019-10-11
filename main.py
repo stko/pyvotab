@@ -35,6 +35,7 @@ class Main(object):
 		self.ui.file_list_listView.setModel(self.entry)
 		self.ui.file_list_listView.clicked[QtCore.QModelIndex].connect(self.on_clicked)      
 
+		self.ptlist = []
 		self.tlist = []
 		self.itemOld = QtGui.QStandardItem("text")
 		self.firstClick = False  #Bugfix fuer Up-Down-Button bevor ein Element ausgewaehlt wurde
@@ -176,6 +177,7 @@ class Main(object):
 		item = QtGui.QStandardItem()
 		self.ui.excel_tabWidget.clear()
 		self.tlist.clear()
+		self.ptlist.clear()
 		indexnr = self.index.row()
 		red={'internal_style':QtGui.QBrush(QtGui.QColor(255, 0, 0)),'excel_style':None} 
 		green={'internal_style':QtGui.QBrush(QtGui.QColor(0, 255, 0)) ,'excel_style':None} 
@@ -228,11 +230,11 @@ class Main(object):
 		#für jeden ausgelesenen pt. sheet mit pyvotab in tlist
 		for l in range(len(self.tlist)):
 			pt = self.tlist[l][1]
-			ptlist = pt.getPrintDict()		
+			self.ptlist.append(pt.getPrintDict())		
 			
 			self.tableview= QtGui.QStandardItemModel() # zeile, spalte
 			#self.tableview.setHorizontalHeaderLabels(header)
-			for sheetname, ptele in ptlist.items():
+			for sheetname, ptele in self.ptlist[-1].items():
 				self.tableview= QtGui.QStandardItemModel() # zeile, spalte
 				for i in range(ptele.xSize+1):
 					for j in range(ptele.ySize+1):
@@ -261,11 +263,11 @@ class Main(object):
 			#print(fileName)
 	
 	def excelsave(self, filename):
-		if(".xls" in filename):
-			writer = ExcelWriter(filename)
-		else:
-			writer = ExcelWriter(filename+".xlsx")
+		if(not ".xls" in filename):
+			filename = filename+".xlsx"
 		
+		writer = ExcelWriter(filename)
+		'''
 		qitemmodel = self.tableview
 		#list = [["" for x in range(qitemmodel.rowCount())] for y in range(qitemmodel.columnCount())]
 		list = []
@@ -284,22 +286,49 @@ class Main(object):
 				except:	
 					list[i].append("")
 					pass
-				
-			
-
-		df = pd.DataFrame(list)
-		df.to_excel(writer,"s1",index=False)
-		worksheet = writer.sheets["s1"]
-		for idx, col in enumerate(df):  # loop through all columns
-			series = df[col]
-			max_len = max((
-				series.astype(str).map(len).max(),  # len of largest item
-				len(str(series.name))  # len of column name/header
-				)) + 1  # adding a little extra space
-			worksheet.set_column(idx, idx, max_len)  # set column width
+		'''
 		
+		for pyvotabmap in self.ptlist:
+			for sheetname, ptele in pyvotabmap.items():
+				list = []
+				for i in range(ptele.xSize+1):
+					try:
+						list[i] = list[i]
+					except:
+						list.append([])
+						pass
+					for j in range(ptele.ySize+1):
+						try:
+							list[i].append(str(ptele[i][j]["value"]))
+							#item = QtGui.QStandardItem(str(ptele[i][j]["value"]))
+							#item.setBackground(ptele[i][j]["style"]['internal_style'])
+							#self.tableview.setItem(i, j, item)
+						except:
+							list[i].append("")
+							pass
+				
+		
+				df = pd.DataFrame(list)
+				#df = df.style.apply(self.highlight_cells()) TODO coloring
+				df.to_excel(writer,sheetname,index=False)
+				
+				worksheet = writer.sheets[sheetname]
+				for idx, col in enumerate(df):  # loop through all columns
+					series = df[col]
+					max_len = max((
+						series.astype(str).map(len).max(),  # len of largest item
+						len(str(series.name))  # len of column name/header
+						)) + 1  # adding a little extra space
+					worksheet.set_column(idx, idx, max_len)  # set column width
+				
+
+				
 		
 		writer.save()
+	
+	def highlight_cells(self):
+		# provide your criteria for highlighting the cells here
+		return ['background-color: yellow']
 	
 	def show(self):
 		self.MainWindow.show()
