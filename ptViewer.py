@@ -152,16 +152,77 @@ class Main(object):
 				self.index = self.entry.item(row).index()
 				self.showMatrix(self.entry.item(row))
 				
+	def isValidInput(self, str):
+		#//?page=1&rows=2&newname=$_otg&cols=3,4&val=5
+	
+		if(not str):
+			self.ui.label_2.setText("No input in field.")
+			return False
 			
+		if("page" in str and "rows" in str and "cols" in str and "val" in str):
+		
+			#page
+			substring = ""
+			try:
+				substring = str[(str.index("page=")+5): ]
+				substring = substring[ :(substring.index("&"))]
+				strlist = substring.split(',')
+				for s in strlist:
+					int(s)
+					
+			except ValueError:
+				self.onlythesesheetswillbecalculated = substring #TODO
+				return True
+					
+					
+			#rows
+			try:
+				substring = str[(str.index("rows=")+5): ]
+				substring = substring[ :(substring.index("&"))]
+				strlist = substring.split(',')
+				for s in strlist:
+					int(s)
+					
+			except ValueError:
+				self.ui.label_2.setText("Eingabefeld bei Rows enthaelt mindestens eine nicht valide Nummer!")
+				return False
+					
+			#cols
+			try:		
+				substring = str[(str.index("cols=")+5): ]
+				substring = substring[ :(substring.index("&"))]
+				strlist = substring.split(',')
+				for s in strlist:
+						int(s)
+			except ValueError:
+				self.ui.label_2.setText("Eingabefeld bei Cols enthaelt mindestens eine nicht valide Nummer!")
+				return False
+			
+			#val
+			try:		
+				substring = str[(str.index("val=")+4): ]
+				strlist = substring.split(',')
+				for s in strlist:
+					int(s)
+					
+			except ValueError:
+				self.ui.label_2.setText("Eingabefeld bei Val enthaelt mindestens eine nicht valide Nummer!")
+				return False
+			
+			print(substring)
+
+		else:
+			self.ui.label_2.setText("Wrong input in field.")
+
+	
 	def calculate(self):
 		if(not self.firstClick):
 			return
-			
+
 		inputtext = self.ui.expression_lineEdit.text()
-		if(not inputtext):
-			self.ui.label_2.setText("Wrong or no input in field. Use position numbers for: Sheet, {Rows}*, {Columns}*, value")
+		if(not self.isValidInput(inputtext)):
 			return
-		
+
 		item = QtGui.QStandardItem()
 		self.ui.excel_tabWidget.clear()
 		self.tlist.clear()
