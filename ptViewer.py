@@ -9,7 +9,8 @@ from pandas import ExcelWriter
 from pandas import ExcelFile
 from pyvotab import Pyvotab
 from ptViewer_ui import Ui_MainWindow
-
+from ptWriter import PtWriter
+from openpyxl.styles import Border, Side, PatternFill, Font, GradientFill, Alignment
 #TODO
 #matrix anpassen farbe,header
 #tabs speichern	
@@ -154,36 +155,23 @@ class Main(object):
 		if(not self.firstClick):
 			return
 			
-		if(not self.ui.expression_lineEdit.text()):
-			self.ui.label_2.setText("Wrong or no input in field. Use position numbers for: Sheet, {Rows}*, {Columns}*, value")
-			return
-		
 		inputtext = self.ui.expression_lineEdit.text()
-		inputlist = inputtext.split(',')
-
-		if(len(inputlist) != 4):
+		if(not inputtext):
 			self.ui.label_2.setText("Wrong or no input in field. Use position numbers for: Sheet, {Rows}*, {Columns}*, value")
 			return
-		# a, 3 4 , 1 2, 5 
-		try:
-			inputlist[0] = int(inputlist[0])
-		except:
-			pass
-		
-		inputlist[1] = self.convertToInt(inputlist[1].strip().split(' '))
-		inputlist[2] = self.convertToInt(inputlist[2].strip().split(' '))
-		inputlist[3] = int(inputlist[3])
 		
 		item = QtGui.QStandardItem()
 		self.ui.excel_tabWidget.clear()
 		self.tlist.clear()
 		self.ptlist.clear()
 		indexnr = self.index.row()
-		red={'internal_style':QtGui.QBrush(QtGui.QColor(255, 0, 0)),'excel_style':None} 
-		green={'internal_style':QtGui.QBrush(QtGui.QColor(0, 255, 0)) ,'excel_style':None} 
-		orange={'internal_style':QtGui.QBrush(QtGui.QColor(255, 165, 0)) ,'excel_style':None} 
-		blue={'internal_style':QtGui.QBrush(QtGui.QColor(0, 0, 255)) ,'excel_style':None} 
-		black={'internal_style':QtGui.QBrush(QtGui.QColor(0, 0, 0)) ,'excel_style':None} 
+		red={'internal_style':QtGui.QBrush(QtGui.QColor(255, 0, 0)),'xls':"FF0000"} 
+		green={'internal_style':QtGui.QBrush(QtGui.QColor(0, 255, 0)) ,'xls':"00FF00"} 
+		orange={'internal_style':QtGui.QBrush(QtGui.QColor(255, 165, 0)) ,'xls':"FF8000"} 
+		default={'internal_style':None ,'xls':None} 
+		blue={'internal_style':QtGui.QBrush(QtGui.QColor(0, 0, 255)) ,'xls':"0000FF"} 
+		lightblue={'internal_style':QtGui.QBrush(QtGui.QColor(100, 100, 255)) ,'xls':"8080FF"} 
+		yellow={'internal_style':QtGui.QBrush(QtGui.QColor(255, 255, 0)) ,'xls':"FFFF00"} 
 		'''
 		Beginn der Ausfuehrung
 		'''
@@ -203,7 +191,6 @@ class Main(object):
 				#wenn dateipfad den sheet pt. ... enthält
 				if(excelSheetname.startswith("pt.")):
 					isInList = False
-					
 					#überprüfen ob pt. bereits in der tlist befindet 
 					for tupl in self.tlist:
 						if(tupl[0] == excelSheetname):
@@ -213,7 +200,8 @@ class Main(object):
 						
 					#wenn der pt. sheet noch nicht in der Liste tlist ist	
 					if (isInList == False): 
-						pt = Pyvotab(red,green,blue) 
+						pt = Pyvotab(red, green, blue, yellow, lightblue, inputtext, debug=False)
+						
 						self.tlist.append((excelSheetname, pt))
 						
 					#den pt sheet des dateipfades auslesen 	
@@ -223,25 +211,31 @@ class Main(object):
 						
 					#wenn die dateipfäde älter sind als der markierte dateipfad der liste
 					if(citem.index().row() < indexnr):
-						pt.newInsertTable( matrixlist, inputlist[0] , { 'rows' : inputlist[1], 'cols' : inputlist[2], 'val' : inputlist[3] , 'filter': None, 'pivot': 'plain'}, False, orange)
+						pt.InsertTable( matrixlist, False, default)
 					else:
-						pt.newInsertTable( matrixlist, inputlist[0] , { 'rows' : inputlist[1], 'cols' : inputlist[2], 'val' : inputlist[3] , 'filter': None, 'pivot': 'plain'}, True, orange)
+						pt.InsertTable( matrixlist, True, default)
 		
 		#für jeden ausgelesenen pt. sheet mit pyvotab in tlist
 		for l in range(len(self.tlist)):
 			pt = self.tlist[l][1]
-			self.ptlist.append(pt.getPrintDict())		
+			self.ptlist += pt.getPrintDict() # add result to global result table		
 			
 			self.tableview= QtGui.QStandardItemModel() # zeile, spalte
 			#self.tableview.setHorizontalHeaderLabels(header)
-			for sheetname, ptele in self.ptlist[-1].items():
+			for pyvot_sheet in self.ptlist:
+				sheetname=pyvot_sheet.name
+				pt_table=pyvot_sheet.table
 				self.tableview= QtGui.QStandardItemModel() # zeile, spalte
-				for i in range(ptele.xSize+1):
-					for j in range(ptele.ySize+1):
+				for row in range(pt_table.ySize):
+					for col in range(pt_table.xSize):
 						try:
-							item = QtGui.QStandardItem(str(ptele[i][j]["value"]))
-							item.setBackground(ptele[i][j]["style"]['internal_style'])
-							self.tableview.setItem(i, j, item)
+							cell_content=pt_table[col][row]
+							if cell_content:
+								item = QtGui.QStandardItem(str(cell_content["value"]))
+								this_style=cell_content["style"]['internal_style']
+								if this_style:
+									item.setBackground(this_style)
+								self.tableview.setItem(row, col, item)
 						except KeyError:
 							pass
 					
@@ -263,68 +257,8 @@ class Main(object):
 			#print(fileName)
 	
 	def excelsave(self, filename):
-		if(not ".xls" in filename):
-			filename = filename+".xlsx"
-		
-		writer = ExcelWriter(filename)
-		'''
-		qitemmodel = self.tableview
-		#list = [["" for x in range(qitemmodel.rowCount())] for y in range(qitemmodel.columnCount())]
-		list = []
-		for i in range(qitemmodel.rowCount()):
-			try:
-				list[i] = list[i]
-			except:
-				list.append([])
-				pass
-				
-			for j in range(qitemmodel.columnCount()):
-				try:
-					list[i][j] = qitemmodel.item(i,j).text()
-				except IndexError:
-					list[i].append(qitemmodel.item(i,j).text())
-				except:	
-					list[i].append("")
-					pass
-		'''
-		
-		for pyvotabmap in self.ptlist:
-			for sheetname, ptele in pyvotabmap.items():
-				list = []
-				for i in range(ptele.xSize+1):
-					try:
-						list[i] = list[i]
-					except:
-						list.append([])
-						pass
-					for j in range(ptele.ySize+1):
-						try:
-							list[i].append(str(ptele[i][j]["value"]))
-							#item = QtGui.QStandardItem(str(ptele[i][j]["value"]))
-							#item.setBackground(ptele[i][j]["style"]['internal_style'])
-							#self.tableview.setItem(i, j, item)
-						except:
-							list[i].append("")
-							pass
-				
-		
-				df = pd.DataFrame(list)
-				#df = df.style.apply(self.highlight_cells()) TODO coloring
-				df.to_excel(writer,sheetname,index=False)
-				
-				worksheet = writer.sheets[sheetname]
-				for idx, col in enumerate(df):  # loop through all columns
-					series = df[col]
-					max_len = max((
-						series.astype(str).map(len).max(),  # len of largest item
-						len(str(series.name))  # len of column name/header
-						)) + 1  # adding a little extra space
-					worksheet.set_column(idx, idx, max_len)  # set column width
-				
-
-				
-		
-		writer.save()
+		pw=PtWriter('xls')
+		pw.save(self.ptlist,filename, {})
 	
 	def highlight_cells(self):
 		# provide your criteria for highlighting the cells here

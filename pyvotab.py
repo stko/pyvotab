@@ -1,5 +1,6 @@
 from pprint import pprint
 import enum 
+from urllib.parse import urlparse, parse_qs
 
 # creating enumerations using class 
 class States(enum.Enum): 
@@ -236,14 +237,17 @@ class PyvotabElement(dict):
 			value = "'{0}|{1}' ({2})".format(
 				self.oldValue, self.newValue, self.changeState)
 		else:
-			value = self.newValue
+			if self.changeState== States.new:
+				value = self.newValue
+			else:
+				value = self.oldValue
 		this_style=self.sourceID
 		if self.changeState == States.old:
 			this_style = self.pyvotab.old_style
 		if self.changeState == States.new:
 			this_style = self.pyvotab.new_style
-		# to have some space for the heading names, we move the value cells 1 row downwards (self.printX + 1)
-		fillFunction(value, self.printX + 1, self.printY,
+		# to have some space for the heading names, we move the value cells 1 row downwards (self.printY + 1)
+		fillFunction(value, self.printX , self.printY+1,
 					 xDirection, 1, this_style)
 
 	def fillPrintGrid(self, multiplier, xDirection, fillFunction):
@@ -284,17 +288,16 @@ class PyvotabElement(dict):
 
 				if xDirection:
 					fillFunction(
-						value, self.level, self[index].startCoord, xDirection, self[index].blockSize, this_style)
+					# to have some space for the heading names, we move the value cells 1 row downwards (self[index].startCoord +1)
+						value, self.level, self[index].startCoord +1, xDirection, self[index].blockSize, this_style)
 						# in case we have a multiple cell span, we need to set some empty filler
 					for i in range(1,self[index].blockSize):
 						fillFunction(
-							None, self.level, self[index].startCoord+i, xDirection, self[index].blockSize, this_style)
+							None, self.level, self[index].startCoord+i+1, xDirection, self[index].blockSize, this_style)
 
 				else:
 					fillFunction(
-					# to have some space for the heading names, we move the value cells 1 row downwards (self.printX + 1)
-
-						value, self[index].startCoord + 1, self.level , xDirection, self[index].blockSize, this_style)
+						value, self[index].startCoord , self.level , xDirection, self[index].blockSize, this_style)
 						# in case we have a multiple cell span, we need to set some empty filler
 					for i in range(1,self[index].blockSize):
 						fillFunction(
@@ -309,7 +312,7 @@ class PyvotabElement(dict):
 		'''
 
 		if self:
-			for key, value in self.items():
+			for value in self.values():
 				print("{{'{0}'".format(hex(id(value))), end='')
 				if value.changeState == States.old:
 					print("-", end="")
@@ -380,9 +383,11 @@ class SingleTab:
 		colDepth = self.headercols()
 		self.ptdict = ptPrintDict()
 		for index in range(len(self.headers['cols'])):
-			self.printfunction(self.headers['cols'][index], colDepth , index , False, 1, self.col_header_style)
+			print("write col header {0} to x:{1} y:{2}".format(self.headers['cols'][index], colDepth-1 , index ))
+			self.printfunction(self.headers['cols'][index], colDepth-1 , index , False, 1, self.col_header_style)
 		for index in range(len(self.headers['rows'])):
-			self.printfunction(self.headers['rows'][index], index , rowDepth-1 , False, 1, self.row_header_style)
+			print("write row header {0} to x:{1} y:{2}".format(self.headers['rows'][index], index , rowDepth))
+			self.printfunction(self.headers['rows'][index], index , rowDepth , False, 1, self.row_header_style)
 		self.rowTd.fillPrintGrid(1, True, self.printfunction)
 		self.colTd.fillPrintGrid(1, False, self.printfunction)
 
@@ -402,17 +407,16 @@ class SingleTab:
 			"value": value, "style": style, "size": blocksize, "xDir": xDirection}
 		else:
 			self.ptdict[px][py] = None
-		if self.ptdict.xSize < px:
-			self.ptdict.xSize = px
-		if self.ptdict.ySize < py:
-			self.ptdict.ySize = py
+		if self.ptdict.xSize < px + 1:
+			self.ptdict.xSize = px +1
+		if self.ptdict.ySize < py + 1:
+			self.ptdict.ySize = py +1
 
 class Pyvotab:
 
-	def __init__(self, old_style, new_style, change_style, row_header_style, col_header_style, page, layout,debug= False):
+	def __init__(self, old_style, new_style, change_style, row_header_style, col_header_style, layout, debug= False):
 		'''
 		Creates a Pyvotab object
-
 
 		Parameters
 		----------
@@ -426,9 +430,16 @@ class Pyvotab:
 			by pyvotab at all, there are only passed through into the result table to allow the user to define the wanted formats
 		page: int or string
 				If int, it's define the column which should be used as page. If string, it's handled as single page, refered py the page name
-		layout : dict
-			contains the layout parameters, which are
-					as result there's a array of tables calculated, indexed by page names
+		layout : dict or string
+			contains the layout parameters, either in an url coded string or an dict. The parameter are
+				page: int or string
+						If int, it's define the column which should be used as page. If string, it's handled as single page, refered py the page name
+				source: string
+					name of the excel sheet which should be used as data table source, can be read by get_source_name(). Only needed when handle e.g. excel files
+					Optional, default pt.1
+				newname: string
+					definition of how the output page name shall be formed. Inside of newname a $ acts as place holder, so newname = "page_$" and original page name of "org" becomes "page_orig"
+					Optional, default $
 				rows: Array of int
 					defines the column indices which shall be used as rows
 				cols: Array of int
@@ -445,9 +456,40 @@ class Pyvotab:
 		self.change_style = change_style
 		self.row_header_style = row_header_style
 		self.col_header_style = col_header_style
-		self.page = page
+		if type(layout) is str:
+			parsed_url=urlparse(layout)
+			print (parsed_url)
+			layout_with_array=parse_qs(parsed_url.query)
+			layout={ k:v[0] for k,v in layout_with_array.items()}
+			print(layout)
+		self.page = self.get_url_parameter(layout,"page","default")
+		try: # is the page a string or an integer representation? if yes, convert it to int
+			self.page=int(self.page)
+		except:
+			pass
+		self.source = self.get_url_parameter(layout,"source","pt.1")
+		self.newname = self.get_url_parameter(layout,"newname","$")
+		# transform the parameter string "1,2,3" into a int array [1 , 2 , 3]
+
+		layout['rows'] = self.split_int_string( self.get_url_parameter(layout,"rows",[]))
+		layout['cols'] = self.split_int_string( self.get_url_parameter(layout,"cols",[]))
+		layout['val'] = int(self.get_url_parameter(layout,"val",1))
 		self.layout = layout
 		self.debug = debug
+
+	def split_int_string(self,list_or_string):
+		''' list_or_string is either a int list or a comma sepated string with integers
+
+		RETURN
+			int list
+		'''
+		if type(list_or_string) is str:
+			return [int(v) for v in list_or_string.split(',')]
+		else:
+			return list_or_string
+
+	def get_source_name(self):
+		return self.newname
 
 
 	def InsertTable(self, table, changeState, sourceID):
@@ -473,6 +515,7 @@ class Pyvotab:
 			identifier of the data source. Not used by program, but maintained as reference
 			to tell the user where the resulting table cells are coming from
 		'''
+
 		header_names=table[0]
 		headers={'rows':[],'cols':[]}
 		for index in self.layout['rows']:
@@ -481,7 +524,6 @@ class Pyvotab:
 			headers['cols'].append( str( header_names[ index - 1 ] ) )
 
 		for row in table[1:]:
-			rowWidth = len(row)
 			rowHash = ""
 			colHash = ""
 			# is the page an int or a string, so single page or multipage
@@ -534,8 +576,43 @@ class Pyvotab:
 			result[page_name]=stab.ptdict
 		pyvoSheet_results=[]
 		for page_name in sorted(result.keys()):
-			pyvoSheet_results.append(pyvoSheet(page_name, result[page_name],"white"))
+			pyvoSheet_results.append(pyvoSheet(self.newname.replace('$',page_name), result[page_name],"white"))
+			print("Remember: correct sheet style not implemented yet")
 		return pyvoSheet_results
+
+	def resolve_parameter_url(self, url):
+		'''does the inital parsing of the format url
+
+		Parameters
+		----------
+		url : string
+			url string as desribed in https://docs.python.org/3/library/urllib.parse.html
+
+		Returns
+		-------
+		res: ParseResult object
+		'''
+
+		return urlparse(url)
+
+	def get_url_parameter(self, param_object,param_name,default_value):
+		'''get parameters 
+
+		Parameters
+		----------
+		url : string
+			url string as desribed in https://docs.python.org/3/library/urllib.parse.html
+
+		Returns
+		-------
+		res: ParseResult object
+		'''
+
+		if not param_name in param_object:
+			return default_value
+		else:
+			return param_object[param_name]
+
 
 class ptPrintDict(dict):
 	'''
@@ -543,4 +620,5 @@ class ptPrintDict(dict):
 	'''
 	xSize = 0
 	ySize = 0
+
 
