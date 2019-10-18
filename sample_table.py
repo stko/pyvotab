@@ -27,7 +27,6 @@ t4 = [
 ]
 
 t5 = [ # = t1 with column header
-	['Vorname', 'Nachname', 'Stadt', 'Straße', 'Hausnummer'],
 	['Hans', 'Mueller', 'Hamburg', 'Postweg', 8],
 	['Klaus', 'Meier', 'Hamburg', 'Feldplatz', 5],
 	['Klaus', 'Meier', 'Berlin', 'Burgallee', 4],
@@ -45,10 +44,13 @@ t6 = [ # = t2 with column header
 ]
 
 
-pt = Pyvotab('lightgrey','lightgreen','yellow','lightblue', 'aquamarine', 3 , { 'rows' : [3, 4 ], 'cols' : [1, 2], 'val' : 5 , 'filter': None, 'pivot': 'plain'}, debug=True)
+pt = Pyvotab('lightgrey','lightgreen','yellow')
 
-pt.InsertTable( t5, False, "white")
-pt.InsertTable( t6, True, "white")
+pt.newInsertTable( t5, 3 , { 'rows' : [3, 4 ], 'cols' : [1, 2], 'val' : 5 , 'filter': None, 'pivot': 'plain'}, False, "orange")
+pt.newInsertTable( t6, 3 , { 'rows' : [3, 4 ], 'cols' : [1, 2], 'val' : 5 , 'filter': None, 'pivot': 'plain'}, False, "orange")
+
+#pt.insertTable(t1, 2, False, "orange")
+#pt.insertTable(t2, 2, True, "lightblue")
 
 
 '''
@@ -57,32 +59,31 @@ colDepth = pt.headercols()
 print("rowDepth", rowDepth)
 print("colDepth", colDepth)
 '''
-
-for pyvot_sheet in pt.getPrintDict():
-	page_name=pyvot_sheet.name
-	printDict=pyvot_sheet.table
+printDicts = pt.getPrintDict()
+for page_name, printDict in printDicts.items():
 	print("tabellen_name",page_name)
-	print('<table border="1">')
+	print("<table>")
 	for x in range(printDict.xSize+1):
 		print("<tr>")
 		for y in range(printDict.ySize+1):
 			try:
-				cell_content=printDict[x][y]
+				printDict[x][y]
 			except:
 				print("<td/> ", end='')
 				continue
-			if cell_content: # if content is None, then it's an empty filler element, needed to handle multicell html cells correctly
-				print("<td ", end='')
+			print("<td ", end='')
 
-				print('style="background-color:', end='')
-				print(cell_content["style"]+'" ', end='')
-				if cell_content["xDir"]:
-					print('colspan="',end='')
-				else:
-					print('rowspan="',end='')
-				print(str(cell_content["size"])+'" ',end='')
-				print(">", end='')
+			print('style="background-color:', end='')
+			print(printDict[x][y]["style"]+'" ', end='')
+			'''
+			if printDict[x][y]["xDir"]:
+				print('colspan="',end='')
+			else:
+				print('rowspan="',end='')
+			print(str(printDict[x][y]["size"])+'" ',end='')
+			'''
+			print(">", end='')
 
-				print(cell_content["value"]+"</td>", end='')
+			print(printDict[x][y]["value"]+"</td>", end='')
 		print("</tr>")
 	print("</table>")
