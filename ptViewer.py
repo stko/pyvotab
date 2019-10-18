@@ -119,6 +119,7 @@ class Main(object):
 				self.entry.setItem(position, item2)
 				self.ui.file_list_listView.setCurrentIndex(item.index())
 				self.index = item.index()
+				self.showMatrix(item)
 				self.calculated = False
 		
 
@@ -132,6 +133,7 @@ class Main(object):
 				self.entry.setItem(position, item2)
 				self.ui.file_list_listView.setCurrentIndex(item.index())
 				self.index = item.index()
+				self.showMatrix(item)
 				self.calculated = False
 
 		
@@ -141,6 +143,7 @@ class Main(object):
 			row = self.index.row()
 			self.entry.removeRow(item.row())
 			self.calculated = False
+			self.ui.excel_tabWidget.clear()
 			if row != 0:
 				if row >= self.entry.rowCount():
 					row = self.entry.rowCount()-1
