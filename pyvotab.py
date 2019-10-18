@@ -438,7 +438,7 @@ class Pyvotab:
 				pivot: string
 					defines the pivot calculation method. 'plain' is the standard value for no special operation
 		'''
-		
+	#mergeconflict	
 		self.result_tables={}
 		self.old_style = old_style
 		self.new_style = new_style
@@ -449,7 +449,40 @@ class Pyvotab:
 		self.layout = layout
 		self.debug = debug
 
+		for row in table:
+			rowWidth = len(row)
+			actRowDt = self.rowTd
+			actColDt = self.colTd
+			rowHash = ""
+			colHash = ""
+			for key, val in enumerate(row):
+				val=str(val)
+				if key == rowWidth-1:
+					# remember: rows gets colhashes & vice versa
+					rowEndPoint = actRowDt.getEndPoint(colHash)
+					colEndPoint = actColDt.getEndPoint(rowHash)
+					if rowEndPoint == None and colEndPoint == None:
+						newEndPoint = PyvotabElement(self,None, changeState, sourceID)
+						actRowDt.setEndPoint(newEndPoint, colHash)
+						actColDt.setEndPoint(newEndPoint, rowHash)
+					else:
+						if rowEndPoint == None:
+							newEndPoint = colEndPoint
+							actRowDt.setEndPoint(newEndPoint, colHash)
+						else:
+							newEndPoint = rowEndPoint
+							actColDt.setEndPoint(newEndPoint, rowHash)
 
+					newEndPoint.MakeValue(
+						val, actRowDt, actColDt, changeState)
+				else:
+					if key < splitPoint:
+						actRowDt = actRowDt.add(val, changeState, sourceID)
+						rowHash += ":"+val
+					else:
+						actColDt = actColDt.add(val, changeState, sourceID)
+						colHash += ":"+val
+#mergeconflict end
 	def InsertTable(self, table, changeState, sourceID):
 
 
