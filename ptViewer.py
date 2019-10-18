@@ -11,9 +11,7 @@ from pyvotab import Pyvotab
 from ptViewer_ui import Ui_MainWindow
 from ptWriter import PtWriter
 from openpyxl.styles import Border, Side, PatternFill, Font, GradientFill, Alignment
-#TODO
-#matrix anpassen farbe,header
-#tabs speichern	
+
 class Main(object):
 
 	def __init__(self,args):
@@ -39,8 +37,8 @@ class Main(object):
 		self.ptlist = []
 		self.tlist = []
 		self.itemOld = QtGui.QStandardItem("text")
-		self.firstClick = False  #Bugfix fuer Up-Down-Button bevor ein Element ausgewaehlt wurde
-		self.calculated = False #SaveAs darf nur nach "Calculated" aufgerufen werden
+		self.firstClick = False  	#Bugfix fuer Up-Down-Button bevor ein Element ausgewaehlt wurde
+		self.calculated = False 	#SaveAs darf nur nach "Calculated" aufgerufen werden
 		
 		
 
@@ -151,11 +149,6 @@ class Main(object):
 				self.index = self.entry.item(row).index()
 				self.showMatrix(self.entry.item(row))
 				
-	def convertToInt(self, list):
-		for i in range(len(list)):
-			list[i] = int(list[i])
-		
-		return list		
 			
 	def calculate(self):
 		if(not self.firstClick):
@@ -270,10 +263,6 @@ class Main(object):
 	def excelsave(self, filename):
 		pw=PtWriter('xls')
 		pw.save(self.ptlist,filename, {})
-	
-	def highlight_cells(self):
-		# provide your criteria for highlighting the cells here
-		return ['background-color: yellow']
 	
 	def show(self):
 		self.MainWindow.show()
