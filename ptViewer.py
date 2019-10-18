@@ -40,11 +40,13 @@ class Main(object):
 		self.tlist = []
 		self.itemOld = QtGui.QStandardItem("text")
 		self.firstClick = False  #Bugfix fuer Up-Down-Button bevor ein Element ausgewaehlt wurde
+		self.calculated = False #SaveAs darf nur nach "Calculated" aufgerufen werden
 		
 		
 
 	def on_clicked(self, index):
 		self.firstClick = True
+		self.calculated = False
 		self.index = index
 		item = self.entry.itemFromIndex(index)
 		self.ui.label_2.setText("on_clicked: itemIndex=`{}`, itemText=`{}`""".format(item.index().row(), item.text()))
@@ -107,6 +109,7 @@ class Main(object):
 			self.index = point.index()
 			self.showMatrix(point)
 			self.firstClick = True
+			self.calculated = False
 		
 	def up(self):
 		if(self.firstClick):
@@ -118,6 +121,7 @@ class Main(object):
 				self.entry.setItem(position, item2)
 				self.ui.file_list_listView.setCurrentIndex(item.index())
 				self.index = item.index()
+				self.calculated = False
 		
 
 	def down(self):
@@ -130,6 +134,7 @@ class Main(object):
 				self.entry.setItem(position, item2)
 				self.ui.file_list_listView.setCurrentIndex(item.index())
 				self.index = item.index()
+				self.calculated = False
 
 		
 	def remove(self):
@@ -137,6 +142,7 @@ class Main(object):
 			item = self.entry.itemFromIndex(self.index)
 			row = self.index.row()
 			self.entry.removeRow(item.row())
+			self.calculated = False
 			if row != 0:
 				if row >= self.entry.rowCount():
 					row = self.entry.rowCount()-1
@@ -243,9 +249,14 @@ class Main(object):
 				#tele = self.tlist[l]	
 				#self.add_Tab(tele[0])
 				self.add_Tab(sheetname)
+		self.calculated = True		
 	
 				
 	def saveAs(self):
+		if(not self.calculated):
+			self.ui.label_2.setText("Bevor die Datei abgespeichert werden kann, muss sie zuerst berechnet werden!")
+			return
+			
 		options = QFileDialog.Options()
 		options |= QFileDialog.DontUseNativeDialog
 		fileName, _ = QFileDialog.getSaveFileName(self.MainWindow, "QFileDialog.getSaveFileName()","","Excel Files (*.xlsx *xlsm *.xls);; All Files (*)", options=options)
