@@ -154,6 +154,7 @@ class Main(object):
 				
 	def isValidInput(self, str):
 		#//?page=1&rows=2&newname=$_otg&cols=3,4&val=5
+		#//?page=1&rows=1,2,3,4,5,6,7,8,9,10,11,12&newname=$_otg&cols=13,14,15&val=16
 	
 		if(not str):
 			self.ui.label_2.setText("No input in field.")
@@ -220,8 +221,8 @@ class Main(object):
 			return
 
 		inputtext = self.ui.expression_lineEdit.text()
-		if(not self.isValidInput(inputtext)):
-			return
+		#if(not self.isValidInput(inputtext)):
+		#	return
 
 		item = QtGui.QStandardItem()
 		self.ui.excel_tabWidget.clear()
