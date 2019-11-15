@@ -3,11 +3,13 @@ import os
 from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog, QTabWidget, QWidget
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QObject, pyqtSlot
-
+import xlrd 
+from xlrd import XLRDError
+import numpy as np
 import pandas as pd
 from pandas import ExcelWriter
 from pandas import ExcelFile
-from pyvotab import Pyvotab
+from pyvotab import Pyvotab, pyvoSheet
 from ptViewer_ui import Ui_MainWindow
 from ptWriter import PtWriter
 from openpyxl.styles import Border, Side, PatternFill, Font, GradientFill, Alignment
@@ -64,13 +66,28 @@ class Main(object):
 			
 			header = df1.head()
 			self.tableview= QtGui.QStandardItemModel(len(list),len(header)-1) # zeile, spalte
-			self.tableview.setHorizontalHeaderLabels(header)
+			#self.tableview.setHorizontalHeaderLabels(header)
 			for i in range(len(list)):
 				for j in range(len(list[i])):
 					item = QtGui.QStandardItem(str(list[i][j]))
 					self.tableview.setItem(i, j, item)
 				
 			self.add_Tab(ele)
+			
+			
+	def showMatrixSheet(self, updatetupel):
+
+		list = updatetupel[1]
+		
+		self.tableview= QtGui.QStandardItemModel(len(list)-1,len(list[0])-1) # zeile, spalte
+		self.tableview.setHorizontalHeaderLabels(list[0])
+		for i in range(1, len(list)):
+			for j in range(len(list[i])):
+				item = QtGui.QStandardItem(str(list[i][j]))
+				self.tableview.setItem(i-1, j, item)
+			
+		self.add_Tab(updatetupel[0])
+		
 	
 	def add_Tab(self, tabname):
 		self.tab = QtWidgets.QWidget()
@@ -97,15 +114,14 @@ class Main(object):
 		fileName, _ = QFileDialog.getOpenFileNames(self.MainWindow, "QFileDialog.getOpenFileName()", "","Excel Files (*.xlsx *xlsm *.xls);; All Files (*)", options=options)
 		
 		if fileName:
-			row = self.entry.rowCount()
 			for file in fileName:
 				it = QtGui.QStandardItem(file)
 				self.entry.appendRow(it)
-			
-			point = self.entry.item(row)
+
+			point = self.entry.item(self.entry.rowCount()-1)
 			self.ui.file_list_listView.setCurrentIndex(point.index())
 			self.index = point.index()
-			self.showMatrix(point)
+			#self.showMatrix(point)
 			self.firstClick = True
 			self.calculated = False
 		
@@ -210,7 +226,7 @@ class Main(object):
 				self.ui.label_2.setText("Eingabefeld bei Val enthaelt mindestens eine nicht valide Nummer!")
 				return False
 			
-			print(substring)
+			#print(substring)
 
 		else:
 			self.ui.label_2.setText("Wrong input in field.")
@@ -221,9 +237,12 @@ class Main(object):
 			return
 
 		inputtext = self.ui.expression_lineEdit.text()
-		#if(not self.isValidInput(inputtext)):
-		#	return
-
+		ValidInput = False
+		if(inputtext.strip()):
+			ValidInput =True
+			
+		
+		self.ui.excel_tabWidget.clear() #refresh
 		item = QtGui.QStandardItem()
 		self.ui.excel_tabWidget.clear()
 		self.tlist.clear()
@@ -236,60 +255,90 @@ class Main(object):
 		blue={'internal_style':QtGui.QBrush(QtGui.QColor(0, 0, 255)) ,'xls':"0000FF"} 
 		lightblue={'internal_style':QtGui.QBrush(QtGui.QColor(100, 100, 255)) ,'xls':"8080FF"} 
 		yellow={'internal_style':QtGui.QBrush(QtGui.QColor(255, 255, 0)) ,'xls':"FFFF00"} 
+
+		
 		'''
 		Beginn der Ausfuehrung
 		'''
-		
-		#für jeden dateipfad der liste
-		for i in range(self.entry.rowCount()):
-			if(i > indexnr):
-				break
+		pyvotabIsInList = False
+		savelist = []
+		pyvotabtuple = 0
+		pt = 0
 				
-			citem = self.entry.item(i)
-			df = pd.ExcelFile(citem.text())	
-			
-			#für jedes sheet des dateipfads
-			for excelSheetname in df.sheet_names:
-				pt = 0
-			
-				#wenn dateipfad den sheet pt. ... enthält
-				if(excelSheetname.startswith("pt.")):
-					isInList = False
-					#überprüfen ob pt. bereits in der tlist befindet 
-					for tupl in self.tlist:
-						if(tupl[0] == excelSheetname):
-							pt = tupl[1]
-							isInList = True
-							break
-						
-					#wenn der pt. sheet noch nicht in der Liste tlist ist	
-					if (isInList == False): 
-						pt = Pyvotab(red, green, blue, yellow, lightblue, inputtext, debug=False)
-						
-						self.tlist.append((excelSheetname, pt))
-						
-					#den pt sheet des dateipfades auslesen 	
-					df1 = pd.read_excel (df, excelSheetname)
-					matrixlist = df1.as_matrix().tolist()
-					matrixlist.insert(0, list(df1))
-						
-					#wenn die dateipfäde älter sind als der markierte dateipfad der liste
-					if(citem.index().row() < indexnr):
-						pt.InsertTable( matrixlist, False, default)
-					else:
-						pt.InsertTable( matrixlist, True, default)
+		citem = self.entry.item(indexnr)
+		df = pd.ExcelFile(citem.text())			
 		
-		#für jeden ausgelesenen pt. sheet mit pyvotab in tlist
-		for l in range(len(self.tlist)):
-			pt = self.tlist[l][1]
-			self.ptlist += pt.getPrintDict() # add result to global result table		
+		#für jedes sheet des dateipfads in ptlist speichern
+		for excelSheetname in df.sheet_names:
+
+			df1 = pd.read_excel (df, excelSheetname)
+			savelist = df1.as_matrix()
+			header = []
+			for col in df1.columns:
+				header.append(col)
 			
+			#eingabebefehl in pyvotab speichern
+			if(excelSheetname == "pyvotab"):
+				pyvotabIsInList = True
+				if(ValidInput):
+					savelist = np.append(savelist, [[inputtext]], axis=0)
+
+			savelist = np.append([header], savelist, axis=0)
+			self.ptlist.append(pyvoSheet(excelSheetname, savelist, "white"))
+			
+		
+		#neues pyvotabsheet erstellen
+		if(not pyvotabIsInList):
+			header = [["layout"]]
+			savelist[[]]
+			if(ValidInput):
+				savelist = [[inputtext]]
+			savelist = np.append([header], savelist, axis=0)
+			self.ptlist.append(pyvoSheet("pyvotab", savelist, "white"))
+
+
+		#Unterscheidung zwischen Abarbeiten aller Befehle vom Pyvotab und nur das Abarbeiten der Eingabe
+		for pyvo in self.ptlist:
+			if(pyvo.name == "pyvotab"):
+				if(ValidInput):
+					savelist = [["layout"],[inputtext]]
+				else:
+					savelist = pyvo.table
+				pyvotabtuple = savelist
+				break
+					
+		#Alle Befehle in pyvotabtuple werden abgearbeitet		
+		for i in range(1,len(pyvotabtuple)):
+			pt = Pyvotab(red, green, blue, yellow, lightblue, pyvotabtuple[i][0], debug=False)
+			for i in range(self.entry.rowCount()):
+
+				if(i > indexnr):
+					break
+					
+				citem = self.entry.item(i)
+				df = pd.ExcelFile(citem.text())	
+				df1 = pd.read_excel (df, "pt.1")
+				matrixlist = df1.as_matrix().tolist()
+				matrixlist.insert(0, list(df1))	
+
+				#wenn die dateipfäde älter sind als der markierte dateipfad der liste
+				if(citem.index().row() < indexnr):
+					pt.InsertTable( matrixlist, False, default)
+				else:
+					pt.InsertTable( matrixlist, True, default)
+
+					
+					
+			self.ptlist += pt.getPrintDict() # add result to global result table		
+		
+		self.tableview= QtGui.QStandardItemModel() # zeile, spalte
+		#self.tableview.setHorizontalHeaderLabels(header)
+		for pyvot_sheet in self.ptlist:
+		
+			sheetname=pyvot_sheet.name
+			pt_table=pyvot_sheet.table
 			self.tableview= QtGui.QStandardItemModel() # zeile, spalte
-			#self.tableview.setHorizontalHeaderLabels(header)
-			for pyvot_sheet in self.ptlist:
-				sheetname=pyvot_sheet.name
-				pt_table=pyvot_sheet.table
-				self.tableview= QtGui.QStandardItemModel() # zeile, spalte
+			try:
 				for row in range(pt_table.ySize):
 					for col in range(pt_table.xSize):
 						try:
@@ -302,14 +351,12 @@ class Main(object):
 								self.tableview.setItem(row, col, item)
 						except KeyError:
 							pass
+				self.add_Tab(sheetname)	
+			except AttributeError:
+				self.showMatrixSheet([sheetname, pt_table])
 					
-				
-				#tele = self.tlist[l]	
-				#self.add_Tab(tele[0])
-				self.add_Tab(sheetname)
-		self.calculated = True		
-	
-				
+		self.calculated = True					
+			
 	def saveAs(self):
 		if(not self.calculated):
 			self.ui.label_2.setText("Bevor die Datei abgespeichert werden kann, muss sie zuerst berechnet werden!")
