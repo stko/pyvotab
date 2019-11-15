@@ -58,15 +58,15 @@ class Main(object):
 	def showMatrix(self, item):
 		self.ui.excel_tabWidget.clear()
 		df = pd.ExcelFile(item.text())	
-		#print (xls.sheet_names)
+
 		for ele in df.sheet_names:
-			#print (ele)
+
 			df1 = pd.read_excel (df, ele)
 			list = df1.as_matrix()
 			
 			header = df1.head()
 			self.tableview= QtGui.QStandardItemModel(len(list),len(header)-1) # zeile, spalte
-			#self.tableview.setHorizontalHeaderLabels(header)
+			self.tableview.setHorizontalHeaderLabels(header)
 			for i in range(len(list)):
 				for j in range(len(list[i])):
 					item = QtGui.QStandardItem(str(list[i][j]))
@@ -121,7 +121,7 @@ class Main(object):
 			point = self.entry.item(self.entry.rowCount()-1)
 			self.ui.file_list_listView.setCurrentIndex(point.index())
 			self.index = point.index()
-			#self.showMatrix(point)
+			self.showMatrix(point)
 			self.firstClick = True
 			self.calculated = False
 		
@@ -338,7 +338,15 @@ class Main(object):
 			sheetname=pyvot_sheet.name
 			pt_table=pyvot_sheet.table
 			self.tableview= QtGui.QStandardItemModel() # zeile, spalte
+			'''
+			#header hinzufugen TODO
+			header = []
+			for head in pt_table[0]:
+				print("head: "+str(head[0]))
+				header.append(str(head[0]))
+				'''
 			try:
+				self.tableview.setHorizontalHeaderLabels(header)
 				for row in range(pt_table.ySize):
 					for col in range(pt_table.xSize):
 						try:
