@@ -338,13 +338,7 @@ class Main(object):
 			sheetname=pyvot_sheet.name
 			pt_table=pyvot_sheet.table
 			self.tableview= QtGui.QStandardItemModel() # zeile, spalte
-			'''
-			#header hinzufugen TODO
-			header = []
-			for head in pt_table[0]:
-				print("head: "+str(head[0]))
-				header.append(str(head[0]))
-				'''
+
 			try:
 				self.tableview.setHorizontalHeaderLabels(header)
 				for row in range(pt_table.ySize):

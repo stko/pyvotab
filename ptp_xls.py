@@ -38,7 +38,7 @@ class ptPlugin:
 							pass
 			except AttributeError:
 
-				for row in range(1, len(pt_table)):
+				for row in range(0, len(pt_table)):
 					for col in range(len(pt_table[row])):#pt_table[i][j]
 						this_cell=ws.cell(row=row+1,column=col+1)
 						this_cell.value=str(pt_table[row][col])
