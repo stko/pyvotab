@@ -64,10 +64,13 @@ class ptPlugin:
 						
 		wb.save(filename = file_name)
 		
+	def convertToExcelString(self, text):
+		text = re.sub('[^A-Za-z0-9]+', '', text)
+		return text[:30]
 		
 	def containSheet(self, sheetold, sheetnew):
-		sheetold= re.sub('[^A-Za-z0-9]+', '', sheetold)
-		sheetnew= re.sub('[^A-Za-z0-9]+', '', sheetnew)
+		sheetold = self.convertToExcelString(sheetold)
+		sheetnew = self.convertToExcelString(sheetnew)
 
 		if(sheetold.upper() == sheetnew.upper()):
 			return True
