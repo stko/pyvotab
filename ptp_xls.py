@@ -15,7 +15,7 @@ class ptPlugin:
 		
 		wb = 0
 		loadedWorkbook = False
-
+		
 		try:
 			wb = load_workbook(file_name)
 			loadedWorkbook = True
@@ -65,5 +65,12 @@ class ptPlugin:
 		wb.save(filename = file_name)
 		
 		
-def containSheet(self, sheetold, sheetnew):
-		return True
+	def containSheet(self, sheetold, sheetnew):
+		sheetold= re.sub('[^A-Za-z0-9]+', '', sheetold)
+		sheetnew= re.sub('[^A-Za-z0-9]+', '', sheetnew)
+
+		if(sheetold.upper() == sheetnew.upper()):
+			return True
+		else:
+			return False
+		
