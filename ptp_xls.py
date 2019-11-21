@@ -1,4 +1,6 @@
+import re
 from openpyxl import Workbook
+from openpyxl import load_workbook
 from openpyxl.styles import Border, Side, PatternFill, Font, GradientFill, Alignment
 
 class ptPlugin:
@@ -6,16 +8,31 @@ class ptPlugin:
 	def __init__(self):
 		self.plugin_id='xls'
 
-	def save(self, tables, file_name, options):
+	def save(self, tables, new_tables, file_name, options):
 		print("plugin:",file_name)
 		if not file_name.lower().endswith('.xlsx'):
 			file_name = file_name+".xlsx"
-		wb = Workbook()
-		ws1 = wb.active
-		wb.remove_sheet(ws1)
+		
+		wb = 0
+		loadedWorkbook = False
+
+		try:
+			wb = load_workbook(file_name)
+			loadedWorkbook = True
+		except FileNotFoundError:
+			wb = Workbook()
+			wb.remove_sheet(wb.active)
+			pass
+		
+		
 		for pyvot_sheet in tables:
-			sheet_name=pyvot_sheet.name
+			sheet_name= re.sub('[^A-Za-z0-9]+', '', pyvot_sheet.name)
 			pt_table=pyvot_sheet.table
+			
+			#wenn sheet_name schon existiert, unter berücksichtigung der Namenskonventionen (max 31. zechne, gross/klein egal usw), dann lösche erst die alte, existierende Seite
+			
+			
+			
 			ws = wb.create_sheet(title=sheet_name)
 			try:
 				for row in range(pt_table.ySize):
@@ -45,6 +62,8 @@ class ptPlugin:
 						#this_cell.fill = PatternFill("solid", fgColor="white")
 					
 						
-				
-				
 		wb.save(filename = file_name)
+		
+		
+def containSheet(self, sheetold, sheetnew):
+		return True

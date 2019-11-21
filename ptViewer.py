@@ -331,8 +331,8 @@ class Main(object):
 					
 			self.ptlist += pt.getPrintDict() # add result to global result table		
 		
-		self.tableview= QtGui.QStandardItemModel() # zeile, spalte
-		#self.tableview.setHorizontalHeaderLabels(header)
+		self.tableview= QtGui.QStandardItemModel() # noetig, wenn ptlist keine sheets enthaelt
+
 		for pyvot_sheet in self.ptlist:
 		
 			sheetname=pyvot_sheet.name
@@ -376,7 +376,8 @@ class Main(object):
 	
 	def excelsave(self, filename):
 		pw=PtWriter('xls')
-		pw.save(self.ptlist,filename, {})
+		new_tables = [] #todo new tables
+		pw.save(self.ptlist, new_tables,filename, {})
 	
 	def show(self):
 		self.MainWindow.show()
