@@ -8,7 +8,7 @@ class ptPlugin:
 	def __init__(self):
 		self.plugin_id='xls'
 
-	def save(self, tables, new_tables, file_name, options):
+	def save(self, tables, new_tables, input_file_name, file_name, options):
 		print("plugin:",file_name)
 		if not file_name.lower().endswith('.xlsx'):
 			file_name = file_name+".xlsx"
@@ -17,7 +17,7 @@ class ptPlugin:
 		loadedWorkbook = False
 		
 		try:
-			wb = load_workbook(file_name)
+			wb = load_workbook(input_file_name)
 			loadedWorkbook = True
 		except FileNotFoundError:
 			wb = Workbook()
@@ -25,15 +25,29 @@ class ptPlugin:
 			pass
 		
 		
-		for pyvot_sheet in tables:
-			sheet_name= re.sub('[^A-Za-z0-9]+', '', pyvot_sheet.name)
-			pt_table=pyvot_sheet.table
+		for i in range(len(tables)):
+			sheet_name= re.sub('[^A-Za-z0-9._]+', '', tables[i].name)
+			pt_table=tables[i].table
 			
+			if(sheet_name == "pt.1"):
+				continue
+				
+			'''
 			#wenn sheet_name schon existiert, unter berücksichtigung der Namenskonventionen (max 31. zechne, gross/klein egal usw), dann lösche erst die alte, existierende Seite
-			
-			
-			
+			if(not tables[i].name == "pt.1"):
+
+				for j in range(i+1 ,len(tables)):
+					if(self.containSheet(tables[i].name, tables[j].name)):
+						sheet_name= re.sub('[^A-Za-z0-9._]+', '', tables[j].name)
+						pt_table=tables[j].table
+		'''
+			print(str(i)+" sheetnames: " + str(wb.sheetnames)) #todo remove
+			for datasheet in wb:
+				if(datasheet.title == sheet_name and not sheet_name == "pt.1"):
+					wb.remove_sheet(datasheet) #todo21.11
+				
 			ws = wb.create_sheet(title=sheet_name)
+
 			try:
 				for row in range(pt_table.ySize):
 					for col in range(pt_table.xSize):
@@ -61,11 +75,15 @@ class ptPlugin:
 						this_cell.value=str(pt_table[row][col])
 						#this_cell.fill = PatternFill("solid", fgColor="white")
 					
-						
+			if(tables[i].name == "pyvotab"):
+				ws.cell(row=1, column=1).value = "made with pyvotab"
+				ws.cell(row=1, column=1).hyperlink = "https://github.com/stko/pyvotab"
+				ws.cell(row=1, column=1).style = "Hyperlink"	
+			
 		wb.save(filename = file_name)
 		
 	def convertToExcelString(self, text):
-		text = re.sub('[^A-Za-z0-9]+', '', text)
+		text = re.sub('[^A-Za-z0-9._]+', '', text)
 		return text[:30]
 		
 	def containSheet(self, sheetold, sheetnew):

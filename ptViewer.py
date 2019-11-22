@@ -37,7 +37,7 @@ class Main(object):
 		self.ui.file_list_listView.clicked[QtCore.QModelIndex].connect(self.on_clicked)      
 
 		self.ptlist = []
-		self.tlist = []
+		self.viewlist = []
 		self.itemOld = QtGui.QStandardItem("text")
 		self.firstClick = False  	#Bugfix fuer Up-Down-Button bevor ein Element ausgewaehlt wurde
 		self.calculated = False 	#SaveAs darf nur nach "Calculated" aufgerufen werden
@@ -245,7 +245,7 @@ class Main(object):
 		self.ui.excel_tabWidget.clear() #refresh
 		item = QtGui.QStandardItem()
 		self.ui.excel_tabWidget.clear()
-		self.tlist.clear()
+		self.viewlist.clear()
 		self.ptlist.clear()
 		indexnr = self.index.row()
 		red={'internal_style':QtGui.QBrush(QtGui.QColor(255, 0, 0)),'xls':"FF0000"} 
@@ -281,10 +281,14 @@ class Main(object):
 			if(excelSheetname == "pyvotab"):
 				pyvotabIsInList = True
 				if(ValidInput):
-					savelist = np.append(savelist, [[inputtext]], axis=0)
+					savelist = np.append(savelist, [[inputtext]], axis=0)	
 
 			savelist = np.append([header], savelist, axis=0)
-			self.ptlist.append(pyvoSheet(excelSheetname, savelist, "white"))
+			pyvo = pyvoSheet(excelSheetname, savelist, "white")
+			self.viewlist.append(pyvo)
+			
+			if(excelSheetname == "pyvotab"):
+				self.ptlist.append(pyvo)
 			
 		
 		#neues pyvotabsheet erstellen
@@ -294,11 +298,13 @@ class Main(object):
 			if(ValidInput):
 				savelist = [[inputtext]]
 			savelist = np.append([header], savelist, axis=0)
-			self.ptlist.append(pyvoSheet("pyvotab", savelist, "white"))
+			pyvo = pyvoSheet("pyvotab", savelist, "white")
+			self.viewlist.append(pyvo)
+			self.ptlist.append(pyvo)
 
 
 		#Unterscheidung zwischen Abarbeiten aller Befehle vom Pyvotab und nur das Abarbeiten der Eingabe
-		for pyvo in self.ptlist:
+		for pyvo in self.viewlist:
 			if(pyvo.name == "pyvotab"):
 				if(ValidInput):
 					savelist = [["layout"],[inputtext]]
@@ -328,12 +334,13 @@ class Main(object):
 					pt.InsertTable( matrixlist, True, default)
 
 					
-					
-			self.ptlist += pt.getPrintDict() # add result to global result table		
+			printDict = pt.getPrintDict() # add result to global result table				
+			self.ptlist +=	printDict	
+			self.viewlist += printDict
 		
 		self.tableview= QtGui.QStandardItemModel() # noetig, wenn ptlist keine sheets enthaelt
 
-		for pyvot_sheet in self.ptlist:
+		for pyvot_sheet in self.viewlist:
 		
 			sheetname=pyvot_sheet.name
 			pt_table=pyvot_sheet.table
@@ -376,8 +383,9 @@ class Main(object):
 	
 	def excelsave(self, filename):
 		pw=PtWriter('xls')
-		new_tables = [] #todo new tables
-		pw.save(self.ptlist, new_tables,filename, {})
+		new_tables = [] #todo new table
+		citem = self.entry.item(self.index.row())
+		pw.save(self.ptlist, new_tables, citem.text(), filename, {})
 	
 	def show(self):
 		self.MainWindow.show()
