@@ -316,6 +316,7 @@ class Main(object):
 		#Alle Befehle in pyvotabtuple werden abgearbeitet		
 		for i in range(1,len(pyvotabtuple)):
 			pt = Pyvotab(red, green, blue, yellow, lightblue, pyvotabtuple[i][0], debug=False)
+			pt_name=pt.get_url_parameter(pt.layout,"source","pt.1")
 			for i in range(self.entry.rowCount()):
 
 				if(i > indexnr):
@@ -323,7 +324,7 @@ class Main(object):
 					
 				citem = self.entry.item(i)
 				df = pd.ExcelFile(citem.text())	
-				df1 = pd.read_excel (df, "pt.1")
+				df1 = pd.read_excel (df, pt_name)
 				matrixlist = df1.as_matrix().tolist()
 				matrixlist.insert(0, list(df1))	
 
@@ -383,9 +384,8 @@ class Main(object):
 	
 	def excelsave(self, filename):
 		pw=PtWriter('xls')
-		new_tables = [] #todo new table
 		citem = self.entry.item(self.index.row())
-		pw.save(self.ptlist, new_tables, citem.text(), filename, {})
+		pw.save(self.ptlist, citem.text(), filename, {})
 	
 	def show(self):
 		self.MainWindow.show()

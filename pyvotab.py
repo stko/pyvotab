@@ -457,11 +457,7 @@ class Pyvotab:
 		self.row_header_style = row_header_style
 		self.col_header_style = col_header_style
 		if type(layout) is str:
-			parsed_url=urlparse(layout)
-			print (parsed_url)
-			layout_with_array=parse_qs(parsed_url.query)
-			layout={ k:v[0] for k,v in layout_with_array.items()}
-			print(layout)
+			layout=self.resolve_parameter_url(layout)
 		self.page = self.get_url_parameter(layout,"page","default")
 		try: # is the page a string or an integer representation? if yes, convert it to int
 			self.page=int(self.page)
@@ -590,10 +586,12 @@ class Pyvotab:
 
 		Returns
 		-------
-		res: ParseResult object
+		res: parameter dictionary
 		'''
-
-		return urlparse(url)
+		parsed_url=urlparse(url)
+		layout_with_array=parse_qs(parsed_url.query)
+		layout={ k:v[0] for k,v in layout_with_array.items()}
+		return layout
 
 	def get_url_parameter(self, param_object,param_name,default_value):
 		'''get parameters 

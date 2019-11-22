@@ -8,7 +8,7 @@ class ptPlugin:
 	def __init__(self):
 		self.plugin_id='xls'
 
-	def save(self, tables, new_tables, input_file_name, file_name, options):
+	def save(self, tables, input_file_name, file_name, options):
 		print("plugin:",file_name)
 		if not file_name.lower().endswith('.xlsx'):
 			file_name = file_name+".xlsx"
@@ -29,22 +29,11 @@ class ptPlugin:
 			sheet_name= re.sub('[^A-Za-z0-9._]+', '', tables[i].name)
 			pt_table=tables[i].table
 			
-			if(sheet_name == "pt.1"):
-				continue
-				
-			'''
-			#wenn sheet_name schon existiert, unter berücksichtigung der Namenskonventionen (max 31. zechne, gross/klein egal usw), dann lösche erst die alte, existierende Seite
-			if(not tables[i].name == "pt.1"):
 
-				for j in range(i+1 ,len(tables)):
-					if(self.containSheet(tables[i].name, tables[j].name)):
-						sheet_name= re.sub('[^A-Za-z0-9._]+', '', tables[j].name)
-						pt_table=tables[j].table
-		'''
-			print(str(i)+" sheetnames: " + str(wb.sheetnames)) #todo remove
+				
 			for datasheet in wb:
-				if(datasheet.title == sheet_name and not sheet_name == "pt.1"):
-					wb.remove_sheet(datasheet) #todo21.11
+				if(datasheet.title == sheet_name):
+					wb.remove_sheet(datasheet) 
 				
 			ws = wb.create_sheet(title=sheet_name)
 
