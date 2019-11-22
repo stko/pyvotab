@@ -1,4 +1,4 @@
 *~
-*.xls
+*.xls*
 __pycache__
 .vs
