@@ -14,7 +14,7 @@ t1 = [
 and routes that data into an x/y matrix, defined by a layout instruction, referencing to the input data columns:
 
 ```python
-{ 'page': 3, 'rows' : [ 3,4 ], 'cols' : [1, 2], 'val' : 5 , 'filter': None, 'pivot': 'plain'}
+	//?source=pt.1&page=3&rows=3,4&newname=$&cols=1,2&val=5
 ```
 
 
