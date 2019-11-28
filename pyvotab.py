@@ -10,10 +10,11 @@ class States(enum.Enum):
 	new = 3
 
 class pyvoSheet:
-	def __init__(self, name, table, style):
+	def __init__(self, name, table, style, template):
 		self.name = name
 		self.table = table
 		self.style = style
+		self.template = template
 
 	def __repr__(self):
 		return {'name':self.name}
@@ -466,6 +467,7 @@ class Pyvotab:
 			pass
 		self.source = self.get_url_parameter(layout,"source","pt.1")
 		self.newname = self.get_url_parameter(layout,"newname","$")
+		self.template = self.get_url_parameter(layout,"template",None)
 		# transform the parameter string "1,2,3" into a int array [1 , 2 , 3]
 
 		layout['rows'] = self.split_int_string( self.get_url_parameter(layout,"rows",[]))
@@ -574,7 +576,7 @@ class Pyvotab:
 		pyvoSheet_results=[]
 		print(repr(result.keys()))
 		for page_name in sorted(result.keys()):
-			pyvoSheet_results.append(pyvoSheet(self.newname.replace('$',page_name), result[page_name],"white"))
+			pyvoSheet_results.append(pyvoSheet(self.newname.replace('$',page_name), result[page_name],"white", self.template))
 			print("Remember: correct sheet style not implemented yet")
 		return pyvoSheet_results
 

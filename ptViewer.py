@@ -354,8 +354,6 @@ class Main(object):
 		
 			sheetname=pyvot_sheet.name
 			pt_table=pyvot_sheet.table
-			ptlayout = pyvot_sheet.layout
-				
 				
 			self.tableview= QtGui.QStandardItemModel() # zeile, spalte
 

@@ -29,21 +29,26 @@ class ptPlugin:
 		for i in range(len(tables)):
 			sheet_name= re.sub('[^A-Za-z0-9._]+', '', tables[i].name)
 			pt_table=tables[i].table
-			layout = tables[i].layout
+			template = tables[i].template
 
 				
 			for datasheet in wb:
 				if(datasheet.title == sheet_name):
 					wb.remove_sheet(datasheet) 
 				
-			if(layout == None):	
+			if(template == None):	
 				ws = wb.create_sheet(title=sheet_name)
 			else:
+				isSheetAvailable = False
 				for datasheet in wb:
-					if(datasheet.title == layout):
+					if(datasheet.title == template):
 						ws = wb.copy_worksheet(datasheet)
 						ws.title = sheet_name
+						isSheetAvailable = True
 
+				if(not isSheetAvailable):
+					ws = wb.create_sheet(title=sheet_name)
+					
 			try:
 				for row in range(pt_table.ySize):
 					for col in range(pt_table.xSize):
