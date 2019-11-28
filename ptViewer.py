@@ -288,7 +288,7 @@ class Main(object):
 					savelist = np.append(savelist, [[inputtext]], axis=0)	
 
 			savelist = np.append([header], savelist, axis=0)
-			pyvo = pyvoSheet(excelSheetname, savelist, "white")
+			pyvo = pyvoSheet(excelSheetname, savelist, "white", None)
 			self.viewlist.append(pyvo)
 			
 			if(excelSheetname == "pyvotab"):
@@ -302,7 +302,7 @@ class Main(object):
 			if(ValidInput):
 				savelist = [[inputtext]]
 			savelist = np.append([header], savelist, axis=0)
-			pyvo = pyvoSheet("pyvotab", savelist, "white")
+			pyvo = pyvoSheet("pyvotab", savelist, "white", None)
 			self.viewlist.append(pyvo)
 			self.ptlist.append(pyvo)
 
@@ -354,6 +354,9 @@ class Main(object):
 		
 			sheetname=pyvot_sheet.name
 			pt_table=pyvot_sheet.table
+			ptlayout = pyvot_sheet.layout
+				
+				
 			self.tableview= QtGui.QStandardItemModel() # zeile, spalte
 
 			try:

@@ -14,6 +14,7 @@ class ptPlugin:
 			file_name = file_name+".xlsx"
 		
 		wb = 0
+		ws = 0
 		loadedWorkbook = False
 		
 		try:
@@ -28,14 +29,20 @@ class ptPlugin:
 		for i in range(len(tables)):
 			sheet_name= re.sub('[^A-Za-z0-9._]+', '', tables[i].name)
 			pt_table=tables[i].table
-			
+			layout = tables[i].layout
 
 				
 			for datasheet in wb:
 				if(datasheet.title == sheet_name):
 					wb.remove_sheet(datasheet) 
 				
-			ws = wb.create_sheet(title=sheet_name)
+			if(layout == None):	
+				ws = wb.create_sheet(title=sheet_name)
+			else:
+				for datasheet in wb:
+					if(datasheet.title == layout):
+						ws = wb.copy_worksheet(datasheet)
+						ws.title = sheet_name
 
 			try:
 				for row in range(pt_table.ySize):
