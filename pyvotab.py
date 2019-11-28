@@ -457,6 +457,7 @@ class Pyvotab:
 		self.row_header_style = row_header_style
 		self.col_header_style = col_header_style
 		if type(layout) is str:
+			print("layout is string..",layout)
 			layout=self.resolve_parameter_url(layout)
 		self.page = self.get_url_parameter(layout,"page","default")
 		try: # is the page a string or an integer representation? if yes, convert it to int
@@ -571,6 +572,7 @@ class Pyvotab:
 			stab.getPrintDict()
 			result[page_name]=stab.ptdict
 		pyvoSheet_results=[]
+		print(repr(result.keys()))
 		for page_name in sorted(result.keys()):
 			pyvoSheet_results.append(pyvoSheet(self.newname.replace('$',page_name), result[page_name],"white"))
 			print("Remember: correct sheet style not implemented yet")
@@ -605,7 +607,7 @@ class Pyvotab:
 		-------
 		res: ParseResult object
 		'''
-
+		print (param_object)
 		if not param_name in param_object:
 			return default_value
 		else:

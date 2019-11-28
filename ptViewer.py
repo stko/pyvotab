@@ -30,7 +30,7 @@ class Main(object):
 		self.ui.calculate_pushButton.clicked.connect(self.calculate)
 		self.ui.save_file_pushButton.clicked.connect(self.saveAs)
 
-		self.ui.label_2.setText("Please Select item in the QListView")
+		self.ui.label_2.setText("Please press the \"Add\"-Button and select your files to compare.")
 		self.index = 0
 		self.entry = QtGui.QStandardItemModel()
 		self.ui.file_list_listView.setModel(self.entry)
@@ -49,11 +49,11 @@ class Main(object):
 		self.calculated = False
 		self.index = index
 		item = self.entry.itemFromIndex(index)
-		self.ui.label_2.setText("on_clicked: itemIndex=`{}`, itemText=`{}`""".format(item.index().row(), item.text()))
 		#item.setForeground(QtGui.QBrush(QtGui.QColor(255, 0, 0))) 
 		#self.itemOld.setForeground(QtGui.QBrush(QtGui.QColor(0, 0, 0))) 
 		self.itemOld = item
 		self.showMatrix(item)
+		self.ui.label_2.setText("Please write a command into the input field or press the \"Calculate\"-Button.")
 	
 	def showMatrix(self, item):
 		self.ui.excel_tabWidget.clear()
@@ -124,6 +124,7 @@ class Main(object):
 			self.showMatrix(point)
 			self.firstClick = True
 			self.calculated = False
+			self.ui.label_2.setText("Please select the current item to compare in the List.")
 		
 	def up(self):
 		if(self.firstClick):
@@ -233,6 +234,7 @@ class Main(object):
 
 	
 	def calculate(self):
+		
 		if(not self.firstClick):
 			return
 
@@ -241,6 +243,7 @@ class Main(object):
 		if(inputtext.strip()):
 			ValidInput =True
 			
+		self.ui.label_2.setText("Calculation is in progress...")	
 		
 		self.ui.excel_tabWidget.clear() #refresh
 		item = QtGui.QStandardItem()
@@ -248,6 +251,7 @@ class Main(object):
 		self.viewlist.clear()
 		self.ptlist.clear()
 		indexnr = self.index.row()
+		white={'internal_style':QtGui.QBrush(QtGui.QColor(255, 255, 255)),'xls':"FFFFFF"} 
 		red={'internal_style':QtGui.QBrush(QtGui.QColor(255, 0, 0)),'xls':"FF0000"} 
 		green={'internal_style':QtGui.QBrush(QtGui.QColor(0, 255, 0)) ,'xls':"00FF00"} 
 		orange={'internal_style':QtGui.QBrush(QtGui.QColor(255, 165, 0)) ,'xls':"FF8000"} 
@@ -315,29 +319,34 @@ class Main(object):
 					
 		#Alle Befehle in pyvotabtuple werden abgearbeitet		
 		for i in range(1,len(pyvotabtuple)):
-			pt = Pyvotab(red, green, blue, yellow, lightblue, pyvotabtuple[i][0], debug=False)
-			pt_name=pt.get_url_parameter(pt.layout,"source","pt.1")
-			for i in range(self.entry.rowCount()):
-
-				if(i > indexnr):
-					break
+			if(type(pyvotabtuple[i][0]) is str):
+				if(indexnr == 0):
+					pt = Pyvotab(white, white, blue, yellow, lightblue, pyvotabtuple[i][0], debug=False)
+				else:	
+					pt = Pyvotab(red, green, blue, yellow, lightblue, pyvotabtuple[i][0], debug=False)
 					
-				citem = self.entry.item(i)
-				df = pd.ExcelFile(citem.text())	
-				df1 = pd.read_excel (df, pt_name)
-				matrixlist = df1.as_matrix().tolist()
-				matrixlist.insert(0, list(df1))	
+				pt_name=pt.get_url_parameter(pt.layout,"source","pt.1")
+				for i in range(self.entry.rowCount()):
 
-				#wenn die dateipfäde älter sind als der markierte dateipfad der liste
-				if(citem.index().row() < indexnr):
-					pt.InsertTable( matrixlist, False, default)
-				else:
-					pt.InsertTable( matrixlist, True, default)
+					if(i > indexnr):
+						break
+						
+					citem = self.entry.item(i)
+					df = pd.ExcelFile(citem.text())	
+					df1 = pd.read_excel (df, pt_name)
+					matrixlist = df1.as_matrix().tolist()
+					matrixlist.insert(0, list(df1))	
+					
+					#wenn die dateipfäde älter sind als der markierte dateipfad der liste
+					if(citem.index().row() < indexnr):
+						pt.InsertTable( matrixlist, False, default)
+					else:
+						pt.InsertTable( matrixlist, True, default)
 
 					
-			printDict = pt.getPrintDict() # add result to global result table				
-			self.ptlist +=	printDict	
-			self.viewlist += printDict
+				printDict = pt.getPrintDict() # add result to global result table				
+				self.ptlist +=	printDict	
+				self.viewlist += printDict
 		
 		self.tableview= QtGui.QStandardItemModel() # noetig, wenn ptlist keine sheets enthaelt
 
@@ -365,13 +374,14 @@ class Main(object):
 			except AttributeError:
 				self.showMatrixSheet([sheetname, pt_table])
 					
-		self.calculated = True					
-			
+		self.calculated = True
+		self.ui.label_2.setText("You can save your calculation now with the \"Save as...\"-Button.")		
+
 	def saveAs(self):
 		if(not self.calculated):
-			self.ui.label_2.setText("Bevor die Datei abgespeichert werden kann, muss sie zuerst berechnet werden!")
 			return
-			
+		
+		self.ui.label_2.setText("Saving is in progress...")	
 		options = QFileDialog.Options()
 		options |= QFileDialog.DontUseNativeDialog
 		fileName, _ = QFileDialog.getSaveFileName(self.MainWindow, "QFileDialog.getSaveFileName()","","Excel Files (*.xlsx *xlsm *.xls);; All Files (*)", options=options)
@@ -381,6 +391,7 @@ class Main(object):
 			#f.write(self.entry.itemFromIndex(self.index).text())
 			#f.close()
 			#print(fileName)
+		self.ui.label_2.setText("Saving finished!")	
 	
 	def excelsave(self, filename):
 		pw=PtWriter('xls')
