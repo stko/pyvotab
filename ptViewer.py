@@ -16,7 +16,36 @@ from openpyxl.styles import Border, Side, PatternFill, Font, GradientFill, Align
 
 class Main(object):
 
+
+
 	def __init__(self,args):
+
+		"""Initiate windows parameters 
+
+		Setting the default user interface parameters and
+		first Initialisation of global Variables.
+
+		global Variables
+		----------
+		index : Integer
+		Index of file, which is chosen by the user, in GUI list
+		
+		pyvotab_list : List of pyvoSheet elements
+		Content of list will be saved in an excel file.
+		
+		view_list : List of pyvoSheet elements
+		Content of list will be displayed in the GUI.
+
+		first_Click : Boolean
+		Ensure that an excel file is chosen before moving it.
+		
+		savable : Boolean
+		Ensure that an excel file is calculated before saving it.
+		
+		Returns
+		-------
+		no value
+		"""
 
 		self.all_s4ps={}
 		self.app = QtWidgets.QApplication(args)
@@ -31,31 +60,60 @@ class Main(object):
 		self.ui.save_file_pushButton.clicked.connect(self.saveAs)
 
 		self.ui.label_2.setText("Please press the \"Add\"-Button and select your files to compare.")
-		self.index = 0
 		self.entry = QtGui.QStandardItemModel()
 		self.ui.file_list_listView.setModel(self.entry)
 		self.ui.file_list_listView.clicked[QtCore.QModelIndex].connect(self.on_clicked)      
 
-		self.ptlist = []
-		self.viewlist = []
-		self.itemOld = QtGui.QStandardItem("text")
-		self.firstClick = False  	#Bugfix fuer Up-Down-Button bevor ein Element ausgewaehlt wurde
-		self.calculated = False 	#SaveAs darf nur nach "Calculated" aufgerufen werden
+		self.index = 0 
+		self.pyvotab_list = []
+		self.view_list = []
+		self.first_Click = False  	#Bugfix fuer Up-Down-Button bevor ein Element ausgewaehlt wurde
+		self.savable = False 	#SaveAs darf nur nach "savable" aufgerufen werden
 		
 		
 
 	def on_clicked(self, index):
-		self.firstClick = True
-		self.calculated = False
+	
+		"""On_clicked Listener for QListView
+
+		Setting the index of a excel file, which is chosen
+		in the QListview by a user.	
+
+		Parameters
+		----------
+		index : Integer
+		Index of file, which is chosen by the user, in GUI list
+		
+		Returns
+		-------
+		no value
+		"""
+		
+		self.first_Click = True
+		self.savable = False
 		self.index = index
 		item = self.entry.itemFromIndex(index)
-		#item.setForeground(QtGui.QBrush(QtGui.QColor(255, 0, 0))) 
-		#self.itemOld.setForeground(QtGui.QBrush(QtGui.QColor(0, 0, 0))) 
-		self.itemOld = item
 		self.showMatrix(item)
 		self.ui.label_2.setText("Please write a command into the input field or press the \"Calculate\"-Button.")
 	
+	
+	
 	def showMatrix(self, item):
+	
+		"""Show the matrix in the GUI
+
+		Content of excel file (item) will be displayed in the GUI.
+
+		Parameters
+		----------
+		item : QStandardItem
+		Contains path of an excel file, which is chosen by user.
+		
+		Returns
+		-------
+		no value
+		"""
+		
 		self.ui.excel_tabWidget.clear()
 		df = pd.ExcelFile(item.text())	
 
@@ -74,10 +132,26 @@ class Main(object):
 				
 			self.add_Tab(ele)
 			
-			
-	def showMatrixSheet(self, updatetupel):
+		
+		
+	def showMatrixSheet(self, update_tupel):
 
-		list = updatetupel[1]
+		"""Show the calculated matrix in the GUI
+
+		Content of calculated excel file (item) 
+		will be displayed in the GUI.
+
+		Parameters
+		----------
+		update_tupel : Tupel(String, matrix)
+		Contains excel title and excel matrix.
+		
+		Returns
+		-------
+		no value
+		"""	
+		
+		list = update_tupel[1]
 		
 		self.tableview= QtGui.QStandardItemModel(len(list)-1,len(list[0])-1) # zeile, spalte
 		self.tableview.setHorizontalHeaderLabels(list[0])
@@ -86,10 +160,27 @@ class Main(object):
 				item = QtGui.QStandardItem(str(list[i][j]))
 				self.tableview.setItem(i-1, j, item)
 			
-		self.add_Tab(updatetupel[0])
+		self.add_Tab(update_tupel[0])
 		
 	
-	def add_Tab(self, tabname):
+	
+	def add_Tab(self, tab_name):
+	
+		"""Create Tabs in the GUI
+
+		Content of calculated or already available
+		excel file will be displayed in the GUI.
+
+		Parameters
+		----------
+		tab_name : String
+		Title of a tab, which should be created.
+		
+		Returns
+		-------
+		no value
+		"""	
+		
 		self.tab = QtWidgets.QWidget()
 		sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 		sizePolicy.setHorizontalStretch(0)
@@ -103,12 +194,28 @@ class Main(object):
 		self.excel_page_tableView.setObjectName("excel_page_tableView")
 		self.gridLayout.addWidget(self.excel_page_tableView, 0, 0, 1, 1)
 		
-		self.ui.excel_tabWidget.addTab(self.tab, tabname)
+		self.ui.excel_tabWidget.addTab(self.tab, tab_name)
 		self.excel_page_tableView.setModel(self.tableview)
 		self.excel_page_tableView.resizeColumnsToContents()
 	
 
+	
 	def add(self):
+	
+		"""Add an excel file into GUI
+
+		Excel files, which are added, will be 
+		displayed in the QListView.
+
+		Parameters
+		----------
+		no value
+		
+		Returns
+		-------
+		no value
+		"""		
+		
 		options = QFileDialog.Options()
 		options |= QFileDialog.DontUseNativeDialog
 		fileName, _ = QFileDialog.getOpenFileNames(self.MainWindow, "QFileDialog.getOpenFileName()", "","Excel Files (*.xlsx *xlsm *.xls);; All Files (*)", options=options)
@@ -122,12 +229,29 @@ class Main(object):
 			self.ui.file_list_listView.setCurrentIndex(point.index())
 			self.index = point.index()
 			self.showMatrix(point)
-			self.firstClick = True
-			self.calculated = False
+			self.first_Click = True
+			self.savable = False
 			self.ui.label_2.setText("Please select the current item to compare in the List.")
 		
+		
+		
 	def up(self):
-		if(self.firstClick):
+	
+		"""Move an excel file up in the GUI
+
+		Excel files, which are chosen by the user, 
+		will be moved up in the QListView by 1.
+
+		Parameters
+		----------
+		no value
+		
+		Returns
+		-------
+		no value
+		"""	
+		
+		if(self.first_Click):
 			item = self.entry.itemFromIndex(self.index)
 			position = item.row()
 			if position > 0:
@@ -137,11 +261,27 @@ class Main(object):
 				self.ui.file_list_listView.setCurrentIndex(item.index())
 				self.index = item.index()
 				self.showMatrix(item)
-				self.calculated = False
+				self.savable = False
 		
 
+		
 	def down(self):
-		if(self.firstClick):
+	
+		"""Move an excel file down in the GUI
+
+		Excel files, which are chosen by the user, 
+		will be moved down in the QListView by 1.
+
+		Parameters
+		----------
+		no value
+		
+		Returns
+		-------
+		no value
+		"""		
+	
+		if(self.first_Click):
 			item = self.entry.itemFromIndex(self.index)
 			position = item.row()
 			if position < self.entry.rowCount()-1:
@@ -151,15 +291,31 @@ class Main(object):
 				self.ui.file_list_listView.setCurrentIndex(item.index())
 				self.index = item.index()
 				self.showMatrix(item)
-				self.calculated = False
+				self.savable = False
 
 		
+		
 	def remove(self):
-		if(self.firstClick):
+		
+		"""Remove an excel file from the GUI
+
+		Excel files, which are chosen by the user, 
+		will be removed from the QListView.
+
+		Parameters
+		----------
+		no value
+		
+		Returns
+		-------
+		no value
+		"""			
+		
+		if(self.first_Click):
 			item = self.entry.itemFromIndex(self.index)
 			row = self.index.row()
 			self.entry.removeRow(item.row())
-			self.calculated = False
+			self.savable = False
 			self.ui.excel_tabWidget.clear()
 			if row != 0:
 				if row >= self.entry.rowCount():
@@ -170,6 +326,11 @@ class Main(object):
 				self.showMatrix(self.entry.item(row))
 				
 	def isValidInput(self, str):
+	
+		"""
+		mathod is not used atm	
+		"""	
+	
 		#//?page=1&rows=2&newname=$_otg&cols=3,4&val=5
 		#//?page=1&rows=1,2,3,4,5,6,7,8,9,10,11,12&newname=$_otg&cols=13,14,15&val=16
 	
@@ -233,9 +394,29 @@ class Main(object):
 			self.ui.label_2.setText("Wrong input in field.")
 
 	
+	
 	def calculate(self):
+	
+		"""Compare excel files 
+
+		This method compares excel files, which
+		are added by the user into QListView, with
+		each other. All excel files above the chosen
+		one will be compared with the excel file, 
+		which are chosen by the user. The result 
+		will be displayed in the GUI and finally 
+		is savable.
+
+		Parameters
+		----------
+		no value
 		
-		if(not self.firstClick):
+		Returns
+		-------
+		no value
+		"""		
+	
+		if(not self.first_Click):
 			return
 
 		inputtext = self.ui.expression_lineEdit.text()
@@ -248,8 +429,8 @@ class Main(object):
 		self.ui.excel_tabWidget.clear() #refresh
 		item = QtGui.QStandardItem()
 		self.ui.excel_tabWidget.clear()
-		self.viewlist.clear()
-		self.ptlist.clear()
+		self.view_list.clear()
+		self.pyvotab_list.clear()
 		indexnr = self.index.row()
 		white={'internal_style':QtGui.QBrush(QtGui.QColor(255, 255, 255)),'xls':"FFFFFF"} 
 		red={'internal_style':QtGui.QBrush(QtGui.QColor(255, 0, 0)),'xls':"FF0000"} 
@@ -272,7 +453,7 @@ class Main(object):
 		citem = self.entry.item(indexnr)
 		df = pd.ExcelFile(citem.text())			
 		
-		#für jedes sheet des dateipfads in ptlist speichern
+		#für jedes sheet des dateipfads in pyvotab_list speichern
 		for excelSheetname in df.sheet_names:
 
 			df1 = pd.read_excel (df, excelSheetname)
@@ -289,10 +470,10 @@ class Main(object):
 
 			savelist = np.append([header], savelist, axis=0)
 			pyvo = pyvoSheet(excelSheetname, savelist, "white", None)
-			self.viewlist.append(pyvo)
+			self.view_list.append(pyvo)
 			
 			if(excelSheetname == "pyvotab"):
-				self.ptlist.append(pyvo)
+				self.pyvotab_list.append(pyvo)
 			
 		
 		#neues pyvotabsheet erstellen
@@ -303,12 +484,12 @@ class Main(object):
 				savelist = [[inputtext]]
 			savelist = np.append([header], savelist, axis=0)
 			pyvo = pyvoSheet("pyvotab", savelist, "white", None)
-			self.viewlist.append(pyvo)
-			self.ptlist.append(pyvo)
+			self.view_list.append(pyvo)
+			self.pyvotab_list.append(pyvo)
 
 
 		#Unterscheidung zwischen Abarbeiten aller Befehle vom Pyvotab und nur das Abarbeiten der Eingabe
-		for pyvo in self.viewlist:
+		for pyvo in self.view_list:
 			if(pyvo.name == "pyvotab"):
 				if(ValidInput):
 					savelist = [["layout"],[inputtext]]
@@ -345,12 +526,12 @@ class Main(object):
 
 					
 				printDict = pt.getPrintDict() # add result to global result table				
-				self.ptlist +=	printDict	
-				self.viewlist += printDict
+				self.pyvotab_list +=	printDict	
+				self.view_list += printDict
 		
-		self.tableview= QtGui.QStandardItemModel() # noetig, wenn ptlist keine sheets enthaelt
+		self.tableview= QtGui.QStandardItemModel() # noetig, wenn pyvotab_list keine sheets enthaelt
 
-		for pyvot_sheet in self.viewlist:
+		for pyvot_sheet in self.view_list:
 		
 			sheetname=pyvot_sheet.name
 			pt_table=pyvot_sheet.table
@@ -375,11 +556,29 @@ class Main(object):
 			except AttributeError:
 				self.showMatrixSheet([sheetname, pt_table])
 					
-		self.calculated = True
+		self.savable = True
 		self.ui.label_2.setText("You can save your calculation now with the \"Save as...\"-Button.")		
 
+		
+		
 	def saveAs(self):
-		if(not self.calculated):
+	
+		"""Save result of calculated files 
+
+		Save the result of all calculated
+		excel files in method calculated
+		in one excel file.
+
+		Parameters
+		----------
+		no value
+		
+		Returns
+		-------
+		no value
+		"""		
+	
+		if(not self.savable):
 			return
 		
 		self.ui.label_2.setText("Saving is in progress...")	
@@ -387,26 +586,71 @@ class Main(object):
 		options |= QFileDialog.DontUseNativeDialog
 		fileName, _ = QFileDialog.getSaveFileName(self.MainWindow, "QFileDialog.getSaveFileName()","","Excel Files (*.xlsx *xlsm *.xls);; All Files (*)", options=options)
 		if fileName:
-			self.excelsave(fileName)
-			#f = open(fileName+".xlsx","w+")
-			#f.write(self.entry.itemFromIndex(self.index).text())
-			#f.close()
-			#print(fileName)
+			pw=PtWriter('xls')
+			citem = self.entry.item(self.index.row())
+			pw.save(self.pyvotab_list, citem.text(), filename, {})
+
 		self.ui.label_2.setText("Saving finished!")	
 	
-	def excelsave(self, filename):
-		pw=PtWriter('xls')
-		citem = self.entry.item(self.index.row())
-		pw.save(self.ptlist, citem.text(), filename, {})
+	
 	
 	def show(self):
+	
+		"""Show GUI of application
+
+		Show the GUI of ptViewer.
+
+		Parameters
+		----------
+		no value
+		
+		Returns
+		-------
+		no value
+		"""		
+	
 		self.MainWindow.show()
 
+		
+		
 	def exit(self):
+		
+		"""Quit application
+
+		Stop application and exit
+		after using it.
+
+		Parameters
+		----------
+		no value
+		
+		Returns
+		-------
+		no value
+		"""			
+		
 		sys.exit(self.app.exec_())
 
 		
+		
 if __name__ == "__main__":
+
+		"""Starting point of application 
+
+		This method starts the application 
+		and shows the GUI. After closing
+		the GUI this application 
+		terminates.
+
+		Parameters
+		----------
+		no value
+		
+		Returns
+		-------
+		no value
+		"""	
+
 	main=Main(sys.argv)
 	main.show()
 	main.exit()		
