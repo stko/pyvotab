@@ -6,7 +6,7 @@ from PyQt5.QtCore import QObject, pyqtSlot
 import xlrd 
 from xlrd import XLRDError
 import numpy as np
-import pandas as pd
+import pandas as panda
 from pandas import ExcelWriter
 from pandas import ExcelFile
 from pyvotab import Pyvotab, pyvoSheet
@@ -93,12 +93,12 @@ class Main(object):
 		self.savable = False
 		self.index = index
 		item = self.entry.itemFromIndex(index)
-		self.showMatrix(item)
+		self.show_Matrix(item)
 		self.ui.label_2.setText("Please write a command into the input field or press the \"Calculate\"-Button.")
 	
 	
 	
-	def showMatrix(self, item):
+	def show_Matrix(self, item):
 	
 		"""Show the matrix in the GUI
 
@@ -115,26 +115,26 @@ class Main(object):
 		"""
 		
 		self.ui.excel_tabWidget.clear()
-		df = pd.ExcelFile(item.text())	
+		data_file = panda.ExcelFile(item.text())	
 
-		for ele in df.sheet_names:
+		for element in data_file.sheet_names:
 
-			df1 = pd.read_excel (df, ele)
-			list = df1.as_matrix()
+			data_file_element = panda.read_excel (data_file, element)
+			list = data_file_element.as_matrix()
 			
-			header = df1.head()
-			self.tableview= QtGui.QStandardItemModel(len(list),len(header)-1) # zeile, spalte
-			self.tableview.setHorizontalHeaderLabels(header)
+			header = data_file_element.head()
+			self.table_view= QtGui.QStandardItemModel(len(list),len(header)-1) # zeile, spalte
+			self.table_view.setHorizontalHeaderLabels(header)
 			for i in range(len(list)):
 				for j in range(len(list[i])):
 					item = QtGui.QStandardItem(str(list[i][j]))
-					self.tableview.setItem(i, j, item)
+					self.table_view.setItem(i, j, item)
 				
-			self.add_Tab(ele)
+			self.add_Tab(element)
 			
 		
 		
-	def showMatrixSheet(self, update_tupel):
+	def show_Matrix_Sheet(self, update_tupel):
 
 		"""Show the calculated matrix in the GUI
 
@@ -153,12 +153,12 @@ class Main(object):
 		
 		list = update_tupel[1]
 		
-		self.tableview= QtGui.QStandardItemModel(len(list)-1,len(list[0])-1) # zeile, spalte
-		self.tableview.setHorizontalHeaderLabels(list[0])
+		self.table_view= QtGui.QStandardItemModel(len(list)-1,len(list[0])-1) # zeile, spalte
+		self.table_view.setHorizontalHeaderLabels(list[0])
 		for i in range(1, len(list)):
 			for j in range(len(list[i])):
 				item = QtGui.QStandardItem(str(list[i][j]))
-				self.tableview.setItem(i-1, j, item)
+				self.table_view.setItem(i-1, j, item)
 			
 		self.add_Tab(update_tupel[0])
 		
@@ -195,7 +195,7 @@ class Main(object):
 		self.gridLayout.addWidget(self.excel_page_tableView, 0, 0, 1, 1)
 		
 		self.ui.excel_tabWidget.addTab(self.tab, tab_name)
-		self.excel_page_tableView.setModel(self.tableview)
+		self.excel_page_tableView.setModel(self.table_view)
 		self.excel_page_tableView.resizeColumnsToContents()
 	
 
@@ -218,17 +218,17 @@ class Main(object):
 		
 		options = QFileDialog.Options()
 		options |= QFileDialog.DontUseNativeDialog
-		fileName, _ = QFileDialog.getOpenFileNames(self.MainWindow, "QFileDialog.getOpenFileName()", "","Excel Files (*.xlsx *xlsm *.xls);; All Files (*)", options=options)
+		file_name, _ = QFileDialog.getOpenFileNames(self.MainWindow, "QFileDialog.getOpenFileName()", "","Excel Files (*.xlsx *xlsm *.xls);; All Files (*)", options=options)
 		
-		if fileName:
-			for file in fileName:
+		if file_name:
+			for file in file_name:
 				it = QtGui.QStandardItem(file)
 				self.entry.appendRow(it)
 
 			point = self.entry.item(self.entry.rowCount()-1)
 			self.ui.file_list_listView.setCurrentIndex(point.index())
 			self.index = point.index()
-			self.showMatrix(point)
+			self.show_Matrix(point)
 			self.first_Click = True
 			self.savable = False
 			self.ui.label_2.setText("Please select the current item to compare in the List.")
@@ -260,7 +260,7 @@ class Main(object):
 				self.entry.setItem(position, item2)
 				self.ui.file_list_listView.setCurrentIndex(item.index())
 				self.index = item.index()
-				self.showMatrix(item)
+				self.show_Matrix(item)
 				self.savable = False
 		
 
@@ -290,7 +290,7 @@ class Main(object):
 				self.entry.setItem(position, item2)
 				self.ui.file_list_listView.setCurrentIndex(item.index())
 				self.index = item.index()
-				self.showMatrix(item)
+				self.show_Matrix(item)
 				self.savable = False
 
 		
@@ -323,9 +323,9 @@ class Main(object):
 
 				self.ui.file_list_listView.setCurrentIndex(self.entry.item(row).index())
 				self.index = self.entry.item(row).index()
-				self.showMatrix(self.entry.item(row))
+				self.show_Matrix(self.entry.item(row))
 				
-	def isValidInput(self, str):
+	def isValidInput(self, string_text):
 	
 		"""
 		mathod is not used atm	
@@ -334,33 +334,33 @@ class Main(object):
 		#//?page=1&rows=2&newname=$_otg&cols=3,4&val=5
 		#//?page=1&rows=1,2,3,4,5,6,7,8,9,10,11,12&newname=$_otg&cols=13,14,15&val=16
 	
-		if(not str):
+		if(not string_text):
 			self.ui.label_2.setText("No input in field.")
 			return False
 			
-		if("page" in str and "rows" in str and "cols" in str and "val" in str):
+		if("page" in string_text and "rows" in string_text and "cols" in string_text and "val" in string_text):
 		
 			#page
 			substring = ""
 			try:
-				substring = str[(str.index("page=")+5): ]
+				substring = string_text[(string_text.index("page=")+5): ]
 				substring = substring[ :(substring.index("&"))]
-				strlist = substring.split(',')
-				for s in strlist:
-					int(s)
+				string_list = substring.split(',')
+				for string_element in string_list:
+					int(string_element)
 					
 			except ValueError:
-				self.onlythesesheetswillbecalculated = substring #TODO
+				self.only_these_sheets_will_be_calculated = substring #TODO
 				return True
 					
 					
 			#rows
 			try:
-				substring = str[(str.index("rows=")+5): ]
+				substring = string_text[(string_text.index("rows=")+5): ]
 				substring = substring[ :(substring.index("&"))]
-				strlist = substring.split(',')
-				for s in strlist:
-					int(s)
+				string_list = substring.split(',')
+				for string_element in string_list:
+					int(string_element)
 					
 			except ValueError:
 				self.ui.label_2.setText("Eingabefeld bei Rows enthaelt mindestens eine nicht valide Nummer!")
@@ -368,21 +368,21 @@ class Main(object):
 					
 			#cols
 			try:		
-				substring = str[(str.index("cols=")+5): ]
+				substring = string_text[(string_text.index("cols=")+5): ]
 				substring = substring[ :(substring.index("&"))]
-				strlist = substring.split(',')
-				for s in strlist:
-						int(s)
+				string_list = substring.split(',')
+				for string_element in string_list:
+						int(string_element)
 			except ValueError:
 				self.ui.label_2.setText("Eingabefeld bei Cols enthaelt mindestens eine nicht valide Nummer!")
 				return False
 			
 			#val
 			try:		
-				substring = str[(str.index("val=")+4): ]
-				strlist = substring.split(',')
-				for s in strlist:
-					int(s)
+				substring = string_text[(string_text.index("val=")+4): ]
+				string_list = substring.split(',')
+				for string_element in string_list:
+					int(string_element)
 					
 			except ValueError:
 				self.ui.label_2.setText("Eingabefeld bei Val enthaelt mindestens eine nicht valide Nummer!")
@@ -419,10 +419,10 @@ class Main(object):
 		if(not self.first_Click):
 			return
 
-		inputtext = self.ui.expression_lineEdit.text()
-		ValidInput = False
-		if(inputtext.strip()):
-			ValidInput =True
+		input_text = self.ui.expression_lineEdit.text()
+		valid_input = False
+		if(input_text.strip()):
+			valid_input =True
 			
 		self.ui.label_2.setText("Calculation is in progress...")	
 		
@@ -445,31 +445,31 @@ class Main(object):
 		'''
 		Beginn der Ausfuehrung
 		'''
-		pyvotabIsInList = False
-		savelist = []
-		pyvotabtuple = 0
-		pt = 0
+		pyvotab_is_in_list = False
+		save_list = []
+		pyvotab_tuple = 0
+		pyvotab = 0
 				
 		citem = self.entry.item(indexnr)
-		df = pd.ExcelFile(citem.text())			
+		data_file = panda.ExcelFile(citem.text())			
 		
 		#für jedes sheet des dateipfads in pyvotab_list speichern
-		for excelSheetname in df.sheet_names:
+		for excelSheetname in data_file.sheet_names:
 
-			df1 = pd.read_excel (df, excelSheetname)
-			savelist = df1.as_matrix()
+			data_file_element = panda.read_excel (data_file, excelSheetname)
+			save_list = data_file_element.as_matrix()
 			header = []
-			for col in df1.columns:
+			for col in data_file_element.columns:
 				header.append(col)
 			
 			#eingabebefehl in pyvotab speichern
 			if(excelSheetname == "pyvotab"):
-				pyvotabIsInList = True
-				if(ValidInput):
-					savelist = np.append(savelist, [[inputtext]], axis=0)	
+				pyvotab_is_in_list = True
+				if(valid_input):
+					save_list = np.append(save_list, [[input_text]], axis=0)	
 
-			savelist = np.append([header], savelist, axis=0)
-			pyvo = pyvoSheet(excelSheetname, savelist, "white", None)
+			save_list = np.append([header], save_list, axis=0)
+			pyvo = pyvoSheet(excelSheetname, save_list, "white", None)
 			self.view_list.append(pyvo)
 			
 			if(excelSheetname == "pyvotab"):
@@ -477,13 +477,13 @@ class Main(object):
 			
 		
 		#neues pyvotabsheet erstellen
-		if(not pyvotabIsInList):
+		if(not pyvotab_is_in_list):
 			header = [["layout"]]
-			savelist[[]]
-			if(ValidInput):
-				savelist = [[inputtext]]
-			savelist = np.append([header], savelist, axis=0)
-			pyvo = pyvoSheet("pyvotab", savelist, "white", None)
+			save_list[[]]
+			if(valid_input):
+				save_list = [[input_text]]
+			save_list = np.append([header], save_list, axis=0)
+			pyvo = pyvoSheet("pyvotab", save_list, "white", None)
 			self.view_list.append(pyvo)
 			self.pyvotab_list.append(pyvo)
 
@@ -491,55 +491,55 @@ class Main(object):
 		#Unterscheidung zwischen Abarbeiten aller Befehle vom Pyvotab und nur das Abarbeiten der Eingabe
 		for pyvo in self.view_list:
 			if(pyvo.name == "pyvotab"):
-				if(ValidInput):
-					savelist = [["layout"],[inputtext]]
+				if(valid_input):
+					save_list = [["layout"],[input_text]]
 				else:
-					savelist = pyvo.table
-				pyvotabtuple = savelist
+					save_list = pyvo.table
+				pyvotab_tuple = save_list
 				break
 					
-		#Alle Befehle in pyvotabtuple werden abgearbeitet		
-		for i in range(1,len(pyvotabtuple)):
-			if(type(pyvotabtuple[i][0]) is str):
+		#Alle Befehle in pyvotab_tuple werden abgearbeitet		
+		for i in range(1,len(pyvotab_tuple)):
+			if(type(pyvotab_tuple[i][0]) is str):
 				if(indexnr == 0):
-					pt = Pyvotab(white, white, blue, yellow, lightblue, pyvotabtuple[i][0], debug=False)
+					pyvotab = Pyvotab(white, white, blue, yellow, lightblue, pyvotab_tuple[i][0], debug=False)
 				else:	
-					pt = Pyvotab(red, green, blue, yellow, lightblue, pyvotabtuple[i][0], debug=False)
+					pyvotab = Pyvotab(red, green, blue, yellow, lightblue, pyvotab_tuple[i][0], debug=False)
 					
-				pt_name=pt.get_url_parameter(pt.layout,"source","pt.1")
+				pt_name=pyvotab.get_url_parameter(pyvotab.layout,"source","pyvotab.1")
 				for i in range(self.entry.rowCount()):
 
 					if(i > indexnr):
 						break
 						
 					citem = self.entry.item(i)
-					df = pd.ExcelFile(citem.text())	
-					df1 = pd.read_excel (df, pt_name)
-					matrixlist = df1.as_matrix().tolist()
-					matrixlist.insert(0, list(df1))	
+					data_file = panda.ExcelFile(citem.text())	
+					data_file_element = panda.read_excel (data_file, pt_name)
+					matrixlist = data_file_element.as_matrix().tolist()
+					matrixlist.insert(0, list(data_file_element))	
 					
 					#wenn die dateipfäde älter sind als der markierte dateipfad der liste
 					if(citem.index().row() < indexnr):
-						pt.InsertTable( matrixlist, False, default)
+						pyvotab.InsertTable( matrixlist, False, default)
 					else:
-						pt.InsertTable( matrixlist, True, default)
+						pyvotab.InsertTable( matrixlist, True, default)
 
 					
-				printDict = pt.getPrintDict() # add result to global result table				
+				printDict = pyvotab.getPrintDict() # add result to global result table				
 				self.pyvotab_list +=	printDict	
 				self.view_list += printDict
 		
-		self.tableview= QtGui.QStandardItemModel() # noetig, wenn pyvotab_list keine sheets enthaelt
+		self.table_view= QtGui.QStandardItemModel() # noetig, wenn pyvotab_list keine sheets enthaelt
 
 		for pyvot_sheet in self.view_list:
 		
 			sheetname=pyvot_sheet.name
 			pt_table=pyvot_sheet.table
 				
-			self.tableview= QtGui.QStandardItemModel() # zeile, spalte
+			self.table_view= QtGui.QStandardItemModel() # zeile, spalte
 
 			try:
-				self.tableview.setHorizontalHeaderLabels(header)
+				self.table_view.setHorizontalHeaderLabels(header)
 				for row in range(pt_table.ySize):
 					for col in range(pt_table.xSize):
 						try:
@@ -549,12 +549,12 @@ class Main(object):
 								this_style=cell_content["style"]['internal_style']
 								if this_style:
 									item.setBackground(this_style)
-								self.tableview.setItem(row, col, item)
+								self.table_view.setItem(row, col, item)
 						except KeyError:
 							pass
 				self.add_Tab(sheetname)	
 			except AttributeError:
-				self.showMatrixSheet([sheetname, pt_table])
+				self.show_Matrix_Sheet([sheetname, pt_table])
 					
 		self.savable = True
 		self.ui.label_2.setText("You can save your calculation now with the \"Save as...\"-Button.")		
@@ -584,11 +584,11 @@ class Main(object):
 		self.ui.label_2.setText("Saving is in progress...")	
 		options = QFileDialog.Options()
 		options |= QFileDialog.DontUseNativeDialog
-		fileName, _ = QFileDialog.getSaveFileName(self.MainWindow, "QFileDialog.getSaveFileName()","","Excel Files (*.xlsx *xlsm *.xls);; All Files (*)", options=options)
-		if fileName:
-			pw=PtWriter('xls')
+		file_name, _ = QFileDialog.getSaveFileName(self.MainWindow, "QFileDialog.getSaveFileName()","","Excel Files (*.xlsx *xlsm *.xls);; All Files (*)", options=options)
+		if file_name:
+			pyvotab_writer=PtWriter('xls')
 			citem = self.entry.item(self.index.row())
-			pw.save(self.pyvotab_list, citem.text(), filename, {})
+			pyvotab_writer.save(self.pyvotab_list, citem.text(), file_name, {})
 
 		self.ui.label_2.setText("Saving finished!")	
 	
@@ -634,22 +634,6 @@ class Main(object):
 		
 		
 if __name__ == "__main__":
-
-		"""Starting point of application 
-
-		This method starts the application 
-		and shows the GUI. After closing
-		the GUI this application 
-		terminates.
-
-		Parameters
-		----------
-		no value
-		
-		Returns
-		-------
-		no value
-		"""	
 
 	main=Main(sys.argv)
 	main.show()
