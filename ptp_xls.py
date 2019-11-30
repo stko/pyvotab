@@ -14,6 +14,7 @@ class ptPlugin:
 			file_name = file_name+".xlsx"
 		
 		wb = 0
+		ws = 0
 		loadedWorkbook = False
 		
 		try:
@@ -28,15 +29,26 @@ class ptPlugin:
 		for i in range(len(tables)):
 			sheet_name= re.sub('[^A-Za-z0-9._]+', '', tables[i].name)
 			pt_table=tables[i].table
-			
+			template = tables[i].template
 
 				
 			for datasheet in wb:
 				if(datasheet.title == sheet_name):
 					wb.remove_sheet(datasheet) 
 				
-			ws = wb.create_sheet(title=sheet_name)
+			if(template == None):	
+				ws = wb.create_sheet(title=sheet_name)
+			else:
+				isSheetAvailable = False
+				for datasheet in wb:
+					if(datasheet.title == template):
+						ws = wb.copy_worksheet(datasheet)
+						ws.title = sheet_name
+						isSheetAvailable = True
 
+				if(not isSheetAvailable):
+					ws = wb.create_sheet(title=sheet_name)
+			ws.sheet_properties.tabColor = tables[i].style['xls']
 			try:
 				for row in range(pt_table.ySize):
 					for col in range(pt_table.xSize):

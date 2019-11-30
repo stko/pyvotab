@@ -10,10 +10,11 @@ class States(enum.Enum):
 	new = 3
 
 class pyvoSheet:
-	def __init__(self, name, table, style):
+	def __init__(self, name, table, style, template):
 		self.name = name
 		self.table = table
 		self.style = style
+		self.template = template
 
 	def __repr__(self):
 		return {'name':self.name}
@@ -23,45 +24,39 @@ class pyvoSheet:
 
 class PyvotabElement(dict):
 
-	def __init__(self, pyvotab, parent, isNew, sourceID, debug ):
+	def __init__(self, value, pyvotab, parent, isNew, source_style, debug ):
 		self.parent = parent
 		self.dimension = 0
-		self.sourceID = sourceID
-		self.oldValue = 'NaN'
-		self.newValue = 'NaN'
+		self.source_style = source_style
+		self.value = value
 		self.pyvotab = pyvotab
 		self.debug = debug
 		# 0= old, 1= unchanged, 2 = new
 		if not isNew:
-			self.changeState = States.old
+			self.change_state = States.old
 		else:
-			self.changeState = States.new
+			self.change_state = States.new
 
 	def increaseDimension(self):
 		self.dimension += 1
 		if self.parent:
 			self.parent.increaseDimension()
 
-	def validateChangeState(self, isNew):
-		''' recalculates the changeState
+	def set_change_state(self, child_state):
+		''' recalculates the change_state
 		'''
 
-		if self.changeState == States.unchanged:  # signals old and new
+		if self.change_state == States.changed:  # there's no more left to set
 			return
-		# 0= old, 1= unchanged, 2 = new
-		if not isNew:
-			newChangeState = States.old
-		else:
-			newChangeState = States.new
-		if self.changeState != newChangeState:
-			print("changeState change:", self.changeState, newChangeState)
-			self.changeState = States.unchanged  # marks
+		if self.change_state==States.old and child_state==States.unchanged:
+			self.change_state=States.unchanged
+		if self.change_state != child_state:
+			print("change_state change:", self.change_state, child_state)
+			self.change_state = States.changed
+		if self.parent:
+			self.parent.set_change_state(self.change_state)
 
-	def get_changeState(self):
-		''' returns node changeState '''
-		return self.changeState
-
-	def add(self, value, isNew, sourceID):
+	def add(self, value, isNew, source_style):
 		''' set value and calculates old/new/unchanged stage
 
 		Parameters
@@ -70,20 +65,15 @@ class PyvotabElement(dict):
 			value to set
 		isNew : bool
 			flag if this value is been seen as old or new
-		sourceID
+		source_style
 			identifier of the data source. Not used by program, but maintained as reference
 			to tell the user where the resulting table cells are coming from
 		'''
-		self.validateChangeState(isNew)
-		if self.sourceID == -1:  # it's one of the inital elements
-			self.sourceID = sourceID
+		self.source_style = source_style
 		self.increaseDimension()
 		if not value in self:
-			self[value] = PyvotabElement(self.pyvotab,self, isNew, sourceID, self.debug)
-			return self[value]
-		else:
-			self[value].validateChangeState(isNew)
-			return self[value]
+			self[value] = PyvotabElement(value,self.pyvotab,self, isNew, source_style, self.debug)
+		return self[value]
 
 	def MakeValue(self, value, rowDt, colDt, isNew):
 		''' set value and calculates old/new/unchanged stage
@@ -91,7 +81,7 @@ class PyvotabElement(dict):
 		Parameters
 		----------
 		value : scalar
-			value to set
+			value to set ,use 'None' to mark an initial endpoint
 		rowDt : Pyvotab
 			reference to the row Pyvotab table
 		colDt : Pyvotab
@@ -102,16 +92,15 @@ class PyvotabElement(dict):
 
 		self.rowDt = rowDt
 		self.colDt = colDt
-		if isNew:
-			self.newValue = value
-			print("changeState change state from:", self.changeState, "for value ", value)
-			if self.oldValue != value:
-				self.changeState = States.new
-			else:
-				self.changeState = States.unchanged
-			print("changeState change state to:", self.changeState)
-		else:
-			self.oldValue = value
+		print("change_state change state from:", self.change_state, "for value ", value)
+		if self.value:
+			if self.change_state==States.old and isNew:
+				self.change_state=States.unchanged
+			if self.value != value:
+				self.change_state = States.changed
+		rowDt.set_change_state(self.change_state)
+		colDt.set_change_state(self.change_state)
+		self.value = value
 
 	def getEndPoint(self, myhash):
 		''' returns value cell object, if is endpoint, otherways None
@@ -140,7 +129,7 @@ class PyvotabElement(dict):
 		myhash : string
 			hash representing the aligned row/col endpoint
 		'''
-
+		print("Make an Endpoint")
 
 		self[hash(myhash)] = newEndPoint
 		self.isEndStup = True
@@ -186,6 +175,7 @@ class PyvotabElement(dict):
 		try:
 			self.isEndStup
 			isEnd = True
+			print("endpunkt gefunden in calPrintCoords")
 		except:  # this is no endstup
 			startCoord -= 1  # reduce it, so that the return value is the same as the start in case this element and its subs covers only 1 row/column
 		for index in sorted(self.keys()):
@@ -234,17 +224,16 @@ class PyvotabElement(dict):
 		'''
 		
 		if self.debug:
-			value = "'{0}|{1}' ({2})".format(
-				self.oldValue, self.newValue, self.changeState)
+			value = "'{0}' ({1})".format(
+				self.value, self.change_state)
 		else:
-			if self.changeState== States.new:
-				value = self.newValue
-			else:
-				value = self.oldValue
-		this_style=self.sourceID
-		if self.changeState == States.old:
+			value = self.value
+		this_style=self.source_style
+		if self.change_state == States.old:
 			this_style = self.pyvotab.old_style
-		if self.changeState == States.new:
+		if self.change_state == States.changed:
+			this_style = self.pyvotab.change_style
+		if self.change_state == States.new:
 			this_style = self.pyvotab.new_style
 		# to have some space for the heading names, we move the value cells 1 row downwards (self.printY + 1)
 		fillFunction(value, self.printX , self.printY+1,
@@ -276,13 +265,15 @@ class PyvotabElement(dict):
 					multiplier, xDirection, fillFunction)
 			else:
 				# determine correct style based on, if the element is old or not
-				this_style = self[index].sourceID
-				if self[index].changeState == States.old:
+				this_style = self[index].source_style
+				if self[index].change_state == States.old:
 					this_style = self.pyvotab.old_style
-				if self[index].changeState == States.new:
+				if self[index].change_state == States.changed:
+					this_style = self.pyvotab.change_style
+				if self[index].change_state == States.new:
 					this_style = self.pyvotab.new_style
 				if self.debug:
-					value = "'{0}' ({1}) {2}".format(index, self[index].get_changeState(),self[index].blockSize)
+					value = "'{0}' ({1}) {2}".format(index, self[index].change_state,self[index].blockSize)
 				else:
 					value = index
 
@@ -314,16 +305,15 @@ class PyvotabElement(dict):
 		if self:
 			for value in self.values():
 				print("{{'{0}'".format(hex(id(value))), end='')
-				if value.changeState == States.old:
+				if value.change_state == States.old:
 					print("-", end="")
-				if value.changeState == States.new:
+				if value.change_state == States.new:
 					print("+", end="")
 				print(": ", end='')
 				value.pprint()
 				print('}} ', end='')
 		else:
-			print("<{0}|{1}> {2}".format(self.oldValue,
-										 self.newValue, self.changeState), end='')
+			print("<{0}> {1}".format(self.value, self.change_state), end='')
 
 class SingleTab:
 	def __init__( self, headers, old_style, new_style, change_style,row_header_style, col_header_style, debug):
@@ -343,8 +333,8 @@ class SingleTab:
 			by pyvotab at all, there are only passed through into the result table to allow the user to define the wanted formats
 		'''
 
-		self.rowTd = PyvotabElement(self,None, False, -1, debug)
-		self.colTd = PyvotabElement(self,None, False, -1, debug)
+		self.rowTd = PyvotabElement('row',self,None, False, -1, debug)
+		self.colTd = PyvotabElement('col',self,None, False, -1, debug)
 		self.old_style = old_style
 		self.new_style = new_style
 		self.row_header_style = row_header_style
@@ -352,6 +342,28 @@ class SingleTab:
 		self.change_style = change_style
 		self.headers = headers
 		self.debug = debug
+
+	def get_sheet_style(self):
+		first_element = next(iter( self.rowTd.values() ))
+		initial_change_state=first_element.change_state
+		default_style=first_element.source_style
+		for element in self.rowTd.values():
+			if initial_change_state != element.change_state:
+				initial_change_state=States.changed
+				break
+		if initial_change_state!=States.changed:
+			for element in self.colTd.values():
+				if initial_change_state != element.change_state:
+					initial_change_state=States.changed
+					break
+		if initial_change_state == States.old:
+			return self.old_style
+		if initial_change_state == States.changed:
+			return self.change_style
+		if initial_change_state == States.new:
+			return self.new_style
+		return default_style
+
 
 	def headerrows(self):
 		'''returns the number of cells  on top of the resulting table, before the data cells starts
@@ -436,7 +448,12 @@ class Pyvotab:
 						If int, it's define the column which should be used as page. If string, it's handled as single page, refered py the page name
 				source: string
 					name of the excel sheet which should be used as data table source, can be read by get_source_name(). Only needed when handle e.g. excel files
+					not used by pivotab itself
 					Optional, default pt.1
+				template: string
+					name of an excel table sheet which should be used as empty but pre-formated sheet to fill the data in
+					not used by pivotab itself
+					optional, default is to create an fresh sheet
 				newname: string
 					definition of how the output page name shall be formed. Inside of newname a $ acts as place holder, so newname = "page_$" and original page name of "org" becomes "page_orig"
 					Optional, default $
@@ -457,6 +474,7 @@ class Pyvotab:
 		self.row_header_style = row_header_style
 		self.col_header_style = col_header_style
 		if type(layout) is str:
+			print("layout is string..",layout)
 			layout=self.resolve_parameter_url(layout)
 		self.page = self.get_url_parameter(layout,"page","default")
 		try: # is the page a string or an integer representation? if yes, convert it to int
@@ -465,6 +483,7 @@ class Pyvotab:
 			pass
 		self.source = self.get_url_parameter(layout,"source","pt.1")
 		self.newname = self.get_url_parameter(layout,"newname","$")
+		self.template = self.get_url_parameter(layout,"template",None)
 		# transform the parameter string "1,2,3" into a int array [1 , 2 , 3]
 
 		layout['rows'] = self.split_int_string( self.get_url_parameter(layout,"rows",[]))
@@ -488,7 +507,7 @@ class Pyvotab:
 		return self.newname
 
 
-	def InsertTable(self, table, changeState, sourceID):
+	def InsertTable(self, table, change_state, source_style):
 
 
 
@@ -505,9 +524,9 @@ class Pyvotab:
 		----------
 		table : list
 			array of data rows. the first row contains the column names 
-		changeState : bool
+		change_state : bool
 			True, if that table is seen as a new input, otherways seen as old, original data
-		sourceID
+		source_style
 			identifier of the data source. Not used by program, but maintained as reference
 			to tell the user where the resulting table cells are coming from
 		'''
@@ -535,18 +554,18 @@ class Pyvotab:
 			actColDt = this_tab.colTd
 			for index in self.layout['rows']:
 				val=str(row[index-1])
-				actRowDt = actRowDt.add(val, changeState, sourceID)
+				actRowDt = actRowDt.add(val, change_state, source_style)
 				rowHash += ":"+val
 			for index in self.layout['cols']:
 				val=str(row[index-1])
-				actColDt = actColDt.add(val, changeState, sourceID)
+				actColDt = actColDt.add(val, change_state, source_style)
 				colHash += ":"+val
 			# store the value as endpoint
 			# remember: rows gets colhashes & vice versa
 			rowEndPoint = actRowDt.getEndPoint(colHash)
 			colEndPoint = actColDt.getEndPoint(rowHash)
 			if rowEndPoint == None and colEndPoint == None:
-				newEndPoint = PyvotabElement(self, None, changeState, sourceID,self.debug)
+				newEndPoint = PyvotabElement(None,self, None, change_state, source_style,self.debug)
 				actRowDt.setEndPoint(newEndPoint, colHash)
 				actColDt.setEndPoint(newEndPoint, rowHash)
 			else:
@@ -558,7 +577,7 @@ class Pyvotab:
 					actColDt.setEndPoint(newEndPoint, rowHash)
 
 			newEndPoint.MakeValue(
-				str(row[self.layout['val']-1]), actRowDt, actColDt, changeState)
+				str(row[self.layout['val']-1]), actRowDt, actColDt, change_state)
 
 	def getPrintDict(self):
 		''' translates the internal data tree structure with it's calculated x/y positions (by layoutgrid()) into its x/y table representation for printout
@@ -569,10 +588,11 @@ class Pyvotab:
 		for page_name, stab in self.result_tables.items():
 			stab.layoutGrid()
 			stab.getPrintDict()
-			result[page_name]=stab.ptdict
+			result[page_name]=stab#.ptdict
 		pyvoSheet_results=[]
+		print(repr(result.keys()))
 		for page_name in sorted(result.keys()):
-			pyvoSheet_results.append(pyvoSheet(self.newname.replace('$',page_name), result[page_name],"white"))
+			pyvoSheet_results.append(pyvoSheet(self.newname.replace('$',page_name), result[page_name].ptdict, result[page_name].get_sheet_style(), self.template))
 			print("Remember: correct sheet style not implemented yet")
 		return pyvoSheet_results
 
@@ -605,7 +625,7 @@ class Pyvotab:
 		-------
 		res: ParseResult object
 		'''
-
+		print (param_object)
 		if not param_name in param_object:
 			return default_value
 		else:
