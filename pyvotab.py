@@ -343,6 +343,27 @@ class SingleTab:
 		self.headers = headers
 		self.debug = debug
 
+	def get_sheet_style(self):
+		initial_change_state=self.rowTd[0].state
+		default_style=self.rowTd[0].style
+		for element in self.rowTd:
+			if initial_change_state != element.state:
+				initial_change_state=States.changed
+				break
+		if initial_change_state!=States.changed:
+			for element in self.colTd:
+				if initial_change_state != element.state:
+					initial_change_state=States.changed
+					break
+		if initial_change_state == States.old:
+			return self.old_style
+		if initial_change_state == States.changed:
+			return self.change_style
+		if initial_change_state == States.new:
+			return self.new_style
+		return default_style
+
+
 	def headerrows(self):
 		'''returns the number of cells  on top of the resulting table, before the data cells starts
 
@@ -570,7 +591,7 @@ class Pyvotab:
 		pyvoSheet_results=[]
 		print(repr(result.keys()))
 		for page_name in sorted(result.keys()):
-			pyvoSheet_results.append(pyvoSheet(self.newname.replace('$',page_name), result[page_name],"white", self.template))
+			pyvoSheet_results.append(pyvoSheet(self.newname.replace('$',page_name), result[page_name], result[page_name].get_sheet_style(), self.template))
 			print("Remember: correct sheet style not implemented yet")
 		return pyvoSheet_results
 

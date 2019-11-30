@@ -61,7 +61,7 @@ print("colDepth", colDepth)
 for pyvot_sheet in pt.getPrintDict():
 	page_name=pyvot_sheet.name
 	pt_table=pyvot_sheet.table
-	print("tabellen_name",page_name)
+	print("tabellen_name",page_name,pyvot_sheet.style)
 	print('<table border="1">')
 	for row in range(pt_table.ySize):
 		print("<tr>")
