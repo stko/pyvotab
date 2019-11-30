@@ -48,7 +48,7 @@ class ptPlugin:
 
 				if(not isSheetAvailable):
 					ws = wb.create_sheet(title=sheet_name)
-					
+			ws.sheet_properties.tabColor = tables[i].style['xls']
 			try:
 				for row in range(pt_table.ySize):
 					for col in range(pt_table.xSize):

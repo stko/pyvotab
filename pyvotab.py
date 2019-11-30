@@ -344,15 +344,16 @@ class SingleTab:
 		self.debug = debug
 
 	def get_sheet_style(self):
-		initial_change_state=self.rowTd[0].state
-		default_style=self.rowTd[0].style
-		for element in self.rowTd:
-			if initial_change_state != element.state:
+		first_element = next(iter( self.rowTd.values() ))
+		initial_change_state=first_element.change_state
+		default_style=first_element.source_style
+		for element in self.rowTd.values():
+			if initial_change_state != element.change_state:
 				initial_change_state=States.changed
 				break
 		if initial_change_state!=States.changed:
-			for element in self.colTd:
-				if initial_change_state != element.state:
+			for element in self.colTd.values():
+				if initial_change_state != element.change_state:
 					initial_change_state=States.changed
 					break
 		if initial_change_state == States.old:
@@ -587,11 +588,11 @@ class Pyvotab:
 		for page_name, stab in self.result_tables.items():
 			stab.layoutGrid()
 			stab.getPrintDict()
-			result[page_name]=stab.ptdict
+			result[page_name]=stab#.ptdict
 		pyvoSheet_results=[]
 		print(repr(result.keys()))
 		for page_name in sorted(result.keys()):
-			pyvoSheet_results.append(pyvoSheet(self.newname.replace('$',page_name), result[page_name], result[page_name].get_sheet_style(), self.template))
+			pyvoSheet_results.append(pyvoSheet(self.newname.replace('$',page_name), result[page_name].ptdict, result[page_name].get_sheet_style(), self.template))
 			print("Remember: correct sheet style not implemented yet")
 		return pyvoSheet_results
 
