@@ -24,12 +24,12 @@ class pyvoSheet:
 
 class PyvotabElement(dict):
 
-	def __init__(self, value, pyvotab, parent, isNew, source_style, debug ):
+	def __init__(self, value, singletab, parent, isNew, source_style, debug ):
 		self.parent = parent
 		self.dimension = 0
 		self.source_style = source_style
 		self.value = value
-		self.pyvotab = pyvotab
+		self.singletab = singletab
 		self.debug = debug
 		# 0= old, 1= unchanged, 2 = new
 		if not isNew:
@@ -72,7 +72,7 @@ class PyvotabElement(dict):
 		self.source_style = source_style
 		self.increaseDimension()
 		if not value in self:
-			self[value] = PyvotabElement(value,self.pyvotab,self, isNew, source_style, self.debug)
+			self[value] = PyvotabElement(value,self.singletab,self, isNew, source_style, self.debug)
 		return self[value]
 
 	def MakeValue(self, value, rowDt, colDt, isNew):
@@ -230,11 +230,11 @@ class PyvotabElement(dict):
 			value = self.value
 		this_style=self.source_style
 		if self.change_state == States.old:
-			this_style = self.pyvotab.old_style
+			this_style = self.singletab.old_style
 		if self.change_state == States.changed:
-			this_style = self.pyvotab.change_style
+			this_style = self.singletab.change_style
 		if self.change_state == States.new:
-			this_style = self.pyvotab.new_style
+			this_style = self.singletab.new_style
 		# to have some space for the heading names, we move the value cells 1 row downwards (self.printY + 1)
 		fillFunction(value, self.printX , self.printY+1,
 					 xDirection, 1, this_style)
@@ -267,11 +267,11 @@ class PyvotabElement(dict):
 				# determine correct style based on, if the element is old or not
 				this_style = self[index].source_style
 				if self[index].change_state == States.old:
-					this_style = self.pyvotab.old_style
+					this_style = self.singletab.old_style
 				if self[index].change_state == States.changed:
-					this_style = self.pyvotab.change_style
+					this_style = self.singletab.change_style
 				if self[index].change_state == States.new:
-					this_style = self.pyvotab.new_style
+					this_style = self.singletab.new_style
 				if self.debug:
 					value = "'{0}' ({1}) {2}".format(index, self[index].change_state,self[index].blockSize)
 				else:
@@ -527,8 +527,10 @@ class Pyvotab:
 		change_state : bool
 			True, if that table is seen as a new input, otherways seen as old, original data
 		source_style
-			identifier of the data source. Not used by program, but maintained as reference
-			to tell the user where the resulting table cells are coming from
+			identifier of the data source. MAKE SURE that each input table has its own source_style
+                        object, even if the styles are all the same. The software uses the style object to distinglish
+                        between the different sources!
+                        Reference to tell the user where the resulting table cells are coming from
 		'''
 
 		header_names=table[0]

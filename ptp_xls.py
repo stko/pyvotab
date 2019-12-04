@@ -12,14 +12,9 @@ class ptPlugin:
 		print("plugin:",file_name)
 		if not file_name.lower().endswith('.xlsx'):
 			file_name = file_name+".xlsx"
-		
-		wb = 0
-		ws = 0
-		loadedWorkbook = False
-		
+
 		try:
 			wb = load_workbook(input_file_name)
-			loadedWorkbook = True
 		except FileNotFoundError:
 			wb = Workbook()
 			wb.remove_sheet(wb.active)

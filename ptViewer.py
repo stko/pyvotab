@@ -469,7 +469,7 @@ class Main(object):
 					save_list = np.append(save_list, [[input_text]], axis=0)	
 
 			save_list = np.append([header], save_list, axis=0)
-			pyvo = pyvoSheet(excelSheetname, save_list, "white", None)
+			pyvo = pyvoSheet(excelSheetname, save_list, white, None)
 			self.view_list.append(pyvo)
 			
 			if(excelSheetname == "pyvotab"):

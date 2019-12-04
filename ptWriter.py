@@ -28,5 +28,5 @@ class PtWriter:
 
 if __name__ == "__main__":
 	pi=PtWriter('xls')
-	pi.save("temp",[],{})
+	pi.save({},"temp",[],{})
 
