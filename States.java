@@ -1,6 +1,8 @@
+
 public enum States {
-   	old,
-	unchanged,
-	changed,
-	newstate 
+
+    old,
+    unchanged,
+    changed,
+    newstate
 }
