@@ -1,88 +1,97 @@
-from pprint import pprint
-
-from pyvotab import Pyvotab
-
-t1 = [
-	['Hans', 'Mueller', 'Hamburg', 'Postweg', 8],
-	['Klaus', 'Meier', 'Hamburg', 'Feldplatz', 5],
-	['Klaus', 'Meier', 'Berlin', 'Burgallee', 4],
-	['Klaus', 'Schulze', 'Berlin', 'Burgallee', 3],
-]
-
-t2 = [
-	['Hins', 'Mueller', 'Hamburg', 'Postweg', 8],
-	['Klaus', 'Meier', 'Hamburg', 'Feldplatz', 6],
-	['Klaus', 'Meier', 'Berlin', 'Burgallee', 4],
-	['Klaus', 'Schulze', 'Berlin', 'Burgallee', 3],
-	['Klaus', 'Schulze', 'Berlin', 'am Deich', 9],
-	['Hans', 'Mueller', 'Berlin', 'am Deich', 10],
-]
-
-t3 = [
-	['Hans', 'Mueller', 'Hamburg', 'Postweg', 8]
-]
-
-t4 = [
-	['Hins', 'Mueller', 'Hamburg', 'Postweg', 8]
-]
-
-t5 = [ # = t1 with column header
-	['Vorname', 'Nachname', 'Stadt', 'Straße', 'Hausnummer'],
-	['Hans', 'Mueller', 'Hamburg', 'Postweg', 8],
-	['Klaus', 'Meier', 'Hamburg', 'Feldplatz', 5],
-	['Klaus', 'Meier', 'Berlin', 'Burgallee', 4],
-	['Klaus', 'Schulze', 'Berlin', 'Burgallee', 3],
-]
-
-t6 = [ # = t2 with column header
-	['Vorname', 'Nachname', 'Stadt', 'Straße', 'Hausnummer'],
-	['Hins', 'Mueller', 'Hamburg', 'Postweg', 8],
-	['Klaus', 'Meier', 'Hamburg', 'Feldplatz', 5],
-	['Klaus', 'Meier', 'Berlin', 'Burgallee', 4],
-	['Klaus', 'Schulze', 'Berlin', 'Burgallee', 3],
-	['Klaus', 'Schulze', 'Berlin', 'am Deich', 9],
-	['Hans', 'Mueller', 'Berlin', 'am Deich', 10],
-]
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 
 
-pt = Pyvotab('lightgrey','lightgreen','yellow','lightblue', 'aquamarine', { 'page': 3, 'rows' : [ 3,4 ], 'cols' : [2, 1], 'val' : 5 , 'filter': None, 'pivot': 'plain'}, debug=True)
+public class sample_table 
+{
 
-pt.InsertTable( t5, False, "white")
-pt.InsertTable( t6, True, "white")
+	public static void main (String[] args)
+	{
+
+		ArrayList<ArrayList<String>> t1 = new ArrayList<>();
+		t1.add(new ArrayList(Arrays.asList(new String[]{"Hans", "Mueller", "Hamburg", "Postweg", "8"})));
+		t1.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Meier", "Hamburg", "Feldplatz", "5"})));
+		t1.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Meier", "Berlin", "Burgallee", "4"})));
+		t1.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Schulze", "Berlin", "Burgallee", "3"})));
 
 
-'''
-rowDepth = pt.headerrows()
-colDepth = pt.headercols()
-print("rowDepth", rowDepth)
-print("colDepth", colDepth)
-'''
+		ArrayList<ArrayList<String>>  t2 = new ArrayList<>();
+		t2.add(new ArrayList(Arrays.asList(new String[]{"Hins", "Mueller", "Hamburg", "Postweg", "8"})));
+		t2.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Meier", "Hamburg", "Feldplatz", "6"})));
+		t2.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Meier", "Berlin", "Burgallee", "4"})));
+		t2.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Schulze", "Berlin", "Burgallee", "3"})));
+		t2.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Schulze", "Berlin", "am Deich", "9"})));
+		t2.add(new ArrayList(Arrays.asList(new String[]{"Hans", "Mueller", "Berlin", "am Deich", "10"})));
 
-for pyvot_sheet in pt.getPrintDict():
-	page_name=pyvot_sheet.name
-	pt_table=pyvot_sheet.table
-	print("tabellen_name",page_name,pyvot_sheet.style)
-	print('<table border="1">')
-	for row in range(pt_table.ySize):
-		print("<tr>")
-		for col in range(pt_table.xSize):
-			try:
-				cell_content=pt_table[col][row]
-			except:
-				print("<td/> ", end='')
-				continue
-			if cell_content: # if content is None, then it's an empty filler element, needed to handle multicell html cells correctly
-				print("<td ", end='')
+		ArrayList<ArrayList<String>>  t3 =new ArrayList<>();
+		t3.add(new ArrayList(Arrays.asList(new String[]{"Hans", "Mueller", "Hamburg", "Postweg", "8"})));
 
-				print('style="background-color:', end='')
-				print(cell_content["style"]+'" ', end='')
-				if cell_content["xDir"]:
-					print('rowspan="',end='')
-				else:
-					print('colspan="',end='')
-				print(str(cell_content["size"])+'" ',end='')
-				print(">", end='')
+		ArrayList<ArrayList<String>> t4 = new ArrayList<>(); 
+		t4.add(new ArrayList(Arrays.asList(new String[]{"Hins", "Mueller", "Hamburg", "Postweg", "8"})));
 
-				print(cell_content["value"]+" row:{0}/col:{1}".format(row,col) +"</td>", end='')
-		print("</tr>")
-	print("</table>")
+		ArrayList<ArrayList<String>>  t5 = new ArrayList<>(); // = t1 with column header
+		t5.add(new ArrayList(Arrays.asList(new String[]{"Vorname", "Nachname", "Stadt", "Straße", "Hausnummer"})));
+		t5.add(new ArrayList(Arrays.asList(new String[]{"Hans", "Mueller", "Hamburg", "Postweg", "8"})));
+		t5.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Meier", "Hamburg", "Feldplatz", "5"})));
+		t5.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Meier", "Berlin", "Burgallee", "4"})));
+		t5.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Schulze", "Berlin", "Burgallee", "3"})));
+
+		ArrayList<ArrayList<String>>  t6 =  new ArrayList<>(); // = t2 with column header
+		t5.add(new ArrayList(Arrays.asList(new String[]{"Vorname", "Nachname", "Stadt", "Straße", "Hausnummer"})));
+		t5.add(new ArrayList(Arrays.asList(new String[]{"Hins", "Mueller", "Hamburg", "Postweg", "8"})));
+		t5.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Meier", "Hamburg", "Feldplatz", "5"})));
+		t5.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Meier", "Berlin", "Burgallee", "4"})));
+		t5.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Schulze", "Berlin", "Burgallee", "3"})));
+		t5.add(new ArrayList(Arrays.asList(new String[]{"Klaus", "Schulze", "Berlin", "am Deich", "9"})));
+		t5.add(new ArrayList(Arrays.asList(new String[]{"Hans", "Mueller", "Berlin", "am Deich", "10"})));
+
+
+		HashMap<String,Object> param_object = new HashMap<> ();
+		param_object.put("page", 3);
+		param_object.put("rows",new ArrayList(Arrays.asList(new Integer[]  {3,4})));
+		param_object.put("cols",new ArrayList(Arrays.asList(new Integer[]  {2,1})));
+		param_object.put("val", 5);
+		param_object.put("filter", null);
+		param_object.put("pivot", "plain");
+		Pyvotab pt = new Pyvotab("lightgrey","lightgreen","yellow","lightblue", "aquamarine", param_object,true);
+
+		pt.InsertTable( t5, false, "white");
+		pt.InsertTable( t6, true, "white");
+
+		for (PyvoSheet pyvot_sheet : pt.getPrintDict()){
+			String page_name=pyvot_sheet.name;
+			PtPrintDict pt_table=pyvot_sheet.table;
+			System.out.printf("tabellen_name %s %s",page_name,pyvot_sheet.style.toString());
+			System.out.printf("<table border=\"1\">\n");
+			for (int row = 0 ; row < pt_table.ySize; row++){
+				System.out.printf("<tr>\n");
+				for (int col=0; col < pt_table.xSize; col++){
+                                    HashMap<String,Object> cell_content;
+					try{
+						cell_content=(HashMap<String,Object>)pt_table.get(col).get(row);
+					}catch(Exception e){
+						System.out.printf("<td/>");
+						continue;
+					}
+					if (cell_content!=null){ // if content is None, then it"s an empty filler element, needed to handle multicell html cells correctly
+						System.out.printf("<td ");
+
+						System.out.printf("style=\"background-color:");
+						System.out.printf(cell_content.get("style")+"\" ");
+						if (((boolean)cell_content.get("xDir"))){
+							System.out.printf("rowspan=\"");
+						}else{
+							System.out.printf("colspan=\"");
+						}
+						System.out.printf("%s",cell_content.get("size")+"\" ");
+						System.out.printf(">");
+
+						System.out.printf(cell_content.get("value")+String.format(" row:{0}/col:{1}",row,col) +"</td>");
+					}
+				}System.out.printf("</tr>");
+			}
+			System.out.printf("</table>");
+			}
+		}
+}
