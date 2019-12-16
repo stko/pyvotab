@@ -5,3 +5,4 @@ __pycache__
 /nbproject/private/
 /build/
 *.class
+/dist/
