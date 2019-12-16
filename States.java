@@ -1,4 +1,3 @@
-
 public enum States {
 
     old,

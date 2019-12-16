@@ -1,4 +1,3 @@
-
 import java.util.HashMap;
 
 public class PtPrintDict extends HashMap<Integer, SmallPtPrintDict> {

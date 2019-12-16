@@ -1,4 +1,3 @@
-
 public class PyvoSheet {
 
     String name;

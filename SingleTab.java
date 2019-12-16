@@ -1,4 +1,3 @@
-
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -77,7 +76,7 @@ public class SingleTab implements FillFunction {
         return default_style;
     }
 
-    int headerrows() {
+    public int headerrows() {
         /*returns the number of cells  on top of the resulting table, before the data cells starts
 
          */
@@ -85,7 +84,7 @@ public class SingleTab implements FillFunction {
         return this.rowTd.depth(1);
     }
 
-    int headercols() {
+    public int headercols() {
         /*returns the number of cells  on the left side of the resulting table, before the data cells starts
 
          */

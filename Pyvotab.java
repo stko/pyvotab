@@ -1,4 +1,3 @@
-
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -74,7 +73,7 @@ public class Pyvotab {
         HashMap<String, Object> param_object;
         param_object = new HashMap<>();
         if (layout instanceof String) {
-            System.out.printf("layout is string..%s", layout);
+            System.out.println("layout is string.."+layout);
             param_object = Pyvotab.resolve_parameter_url(layout.toString());
         } else {
             param_object = ((HashMap<String, Object>) layout);
@@ -91,7 +90,7 @@ public class Pyvotab {
 
         param_object.put("rows", Pyvotab.split_int_string(Pyvotab.get_url_parameter(param_object, "rows", new ArrayList<String>())));
         param_object.put("cols", Pyvotab.split_int_string(Pyvotab.get_url_parameter(param_object, "cols", new ArrayList<String>())));
-        param_object.put("val", Pyvotab.get_url_parameter(param_object, "val", 1));
+        param_object.put("val", Integer.parseInt((String)Pyvotab.get_url_parameter(param_object, "val", "1")));
         this.layout = param_object;
         this.debug = debug;
     }

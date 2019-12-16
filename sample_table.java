@@ -48,10 +48,10 @@ public class sample_table
 
 
 		HashMap<String,Object> param_object = new HashMap<> ();
-		param_object.put("page", 3);
+		param_object.put("page", "3");
 		param_object.put("rows",new ArrayList(Arrays.asList(new Integer[]  {3,4})));
 		param_object.put("cols",new ArrayList(Arrays.asList(new Integer[]  {2,1})));
-		param_object.put("val", 5);
+		param_object.put("val", "5");
 		param_object.put("filter", null);
 		param_object.put("pivot", "plain");
 		Pyvotab pt = new Pyvotab("lightgrey","lightgreen","yellow","lightblue", "aquamarine", param_object,true);
