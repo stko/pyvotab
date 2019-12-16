@@ -1,9 +1,10 @@
+package pyvotab;
 public class PyvoSheet {
 
-    String name;
-    PtPrintDict table;
-    Object style;
-    String template;
+    public String name;
+    public PtPrintDict table;
+    public Object style;
+    public String template;
 
     PyvoSheet(String name, PtPrintDict table, Object style, String template) {
         this.name = name;

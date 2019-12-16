@@ -1,3 +1,4 @@
+package pyvotab;
 public enum States {
 
     old,

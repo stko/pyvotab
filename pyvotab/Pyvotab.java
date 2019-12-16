@@ -1,3 +1,4 @@
+package pyvotab;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -23,7 +24,7 @@ public class Pyvotab {
     HashMap<String, Object> layout;
     boolean debug;
 
-    Pyvotab(Object old_style, Object new_style, Object change_style, Object row_header_style, Object col_header_style, Object layout, boolean debug) {
+    public Pyvotab(Object old_style, Object new_style, Object change_style, Object row_header_style, Object col_header_style, Object layout, boolean debug) {
         /*
          Creates a Pyvotab object
 

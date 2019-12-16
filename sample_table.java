@@ -1,6 +1,9 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import pyvotab.PtPrintDict;
+import pyvotab.PyvoSheet;
+import pyvotab.Pyvotab;
 
 
 public class sample_table 
