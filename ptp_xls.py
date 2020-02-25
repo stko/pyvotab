@@ -2,11 +2,24 @@ import re
 from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.styles import Border, Side, PatternFill, Font, GradientFill, Alignment
+import pandas 
 
 class ptPlugin:
 
 	def __init__(self):
 		self.plugin_id='xls'
+
+	def load(self, file_name):
+		''' returns the excel file as dict of sheet_name:Panda_DataFrame
+		'''
+		res={}
+		data_file = pandas.ExcelFile(file_name)			
+		
+		#für jedes sheet des dateipfads in pyvotab_list speichern
+		for excelSheetname in data_file.sheet_names:
+			res[excelSheetname] = pandas.read_excel (data_file, excelSheetname)
+		return res
+
 
 	def save(self, tables, input_file_name, file_name, options):
 		print("plugin:",file_name)
@@ -43,7 +56,10 @@ class ptPlugin:
 
 				if(not isSheetAvailable):
 					ws = wb.create_sheet(title=sheet_name)
-			ws.sheet_properties.tabColor = tables[i].style['xls']
+			try: # try if a style is set
+				ws.sheet_properties.tabColor = tables[i].style['xls']
+			except:
+				pass
 			try:
 				for row in range(pt_table.ySize):
 					for col in range(pt_table.xSize):
@@ -52,9 +68,13 @@ class ptPlugin:
 							if cell_content:
 								this_cell=ws.cell(column=col+1, row=row+1)
 								this_cell.value="{0}".format(str(cell_content["value"]))
-								this_style=cell_content["style"][self.plugin_id]
-								if this_style:
-									this_cell.fill = PatternFill("solid", fgColor=this_style)
+								try:
+									this_style=cell_content["style"][self.plugin_id]
+									if this_style:
+										#this_cell.fill = PatternFill("solid", fgColor=this_style)
+										this_cell.fill = PatternFill("lightDown", fgColor=this_style)
+								except:
+									pass
 								if cell_content["size"]>1:
 									if cell_content["xDir"]:
 										ws.merge_cells(start_row=row+1, start_column=col+1, end_row=row+1+cell_content["size"]-1, end_column=col+1)

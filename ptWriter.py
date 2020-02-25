@@ -17,11 +17,18 @@ class PtWriter:
 			self.plugin=None
 			traceback.print_exc(file=sys.stdout)
 	
+	def load(self, file_name):
+		try:
+			return self.plugin.load( file_name)
+		except :
+			print("Can't load in plugin "+self.plugin_name)
+			traceback.print_exc(file=sys.stdout)
+	
 	def save(self, tables, input_file_name, output_file_name, options):
 		try:
 			self.plugin.save( tables, input_file_name, output_file_name, options)
 		except :
-			print("Can't save plugin "+self.plugin_name)
+			print("Can't save in plugin "+self.plugin_name)
 			traceback.print_exc(file=sys.stdout)
 	
 		

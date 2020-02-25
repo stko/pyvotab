@@ -1,6 +1,6 @@
 from pprint import pprint
 
-from pyvotab import Pyvotab
+from pyvotab import Pyvotab, PyvoStyles
 
 t1 = [
 	['Hans', 'Mueller', 'Hamburg', 'Postweg', 8],
@@ -44,8 +44,8 @@ t6 = [ # = t2 with column header
 	['Hans', 'Mueller', 'Berlin', 'am Deich', 10],
 ]
 
-
-pt = Pyvotab('lightgrey','lightgreen','yellow','lightblue', 'aquamarine', { 'page': 3, 'rows' : [ 3,4 ], 'cols' : [2, 1], 'val' : 5 , 'filter': None, 'pivot': 'plain'}, debug=True)
+pts= PyvoStyles('lightgrey','lightgreen','yellow','lightblue', 'aquamarine')
+pt = Pyvotab(pts, { 'page': 3, 'rows' : [ 3,4 ], 'cols' : [2, 1], 'val' : 5 , 'filter': None, 'pivot': 'plain'}, debug=True)
 
 pt.InsertTable( t5, False, "white")
 pt.InsertTable( t6, True, "white")

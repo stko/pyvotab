@@ -1,6 +1,7 @@
 from pprint import pprint
 import enum 
 from urllib.parse import urlparse, parse_qs
+import sys
 
 # creating enumerations using class 
 class States(enum.Enum): 
@@ -9,7 +10,7 @@ class States(enum.Enum):
 	changed = 2
 	new = 3
 
-class pyvoSheet:
+class PyvoSheet:
 	def __init__(self, name, table, style, template):
 		self.name = name
 		self.table = table
@@ -51,7 +52,6 @@ class PyvotabElement(dict):
 		if self.change_state==States.old and child_state==States.unchanged:
 			self.change_state=States.unchanged
 		if self.change_state != child_state:
-			print("change_state change:", self.change_state, child_state)
 			self.change_state = States.changed
 		if self.parent:
 			self.parent.set_change_state(self.change_state)
@@ -92,7 +92,6 @@ class PyvotabElement(dict):
 
 		self.rowDt = rowDt
 		self.colDt = colDt
-		print("change_state change state from:", self.change_state, "for value ", value)
 		if self.value:
 			if self.change_state==States.old and isNew:
 				self.change_state=States.unchanged
@@ -129,7 +128,6 @@ class PyvotabElement(dict):
 		myhash : string
 			hash representing the aligned row/col endpoint
 		'''
-		print("Make an Endpoint")
 
 		self[hash(myhash)] = newEndPoint
 		self.isEndStup = True
@@ -175,7 +173,6 @@ class PyvotabElement(dict):
 		try:
 			self.isEndStup
 			isEnd = True
-			print("endpunkt gefunden in calPrintCoords")
 		except:  # this is no endstup
 			startCoord -= 1  # reduce it, so that the return value is the same as the start in case this element and its subs covers only 1 row/column
 		for index in sorted(self.keys()):
@@ -384,22 +381,22 @@ class SingleTab:
 
 		'''
 
-		self.rowTd.calPrintCoords(self.colTd.depth(1), 0, True)
-		self.colTd.calPrintCoords(self.rowTd.depth(1), 0, False)
+		#self.rowTd.calPrintCoords(self.colTd.depth(1), 0, True)
+		#self.colTd.calPrintCoords(self.rowTd.depth(1), 0, False)
+		self.rowTd.calPrintCoords(self.rowTd.depth(1), 0, True)
+		self.colTd.calPrintCoords(self.colTd.depth(1), 0, False)
 
 	def getPrintDict(self):
 		''' translates the internal data tree structure with it's calculated x/y positions (by layoutgrid()) into its x/y table representation for printout
 
 		'''
-		rowDepth = self.headerrows()
-		colDepth = self.headercols()
+		count_of_header_rows = self.headerrows()
+		count_of_header_cols = self.headercols()
 		self.ptdict = ptPrintDict()
 		for index in range(len(self.headers['cols'])):
-			print("write col header {0} to x:{1} y:{2}".format(self.headers['cols'][index], colDepth-1 , index ))
-			self.printfunction(self.headers['cols'][index], colDepth-1 , index , False, 1, self.col_header_style)
+			self.printfunction(self.headers['cols'][index], count_of_header_cols-1 , index , False, 1, self.col_header_style)
 		for index in range(len(self.headers['rows'])):
-			print("write row header {0} to x:{1} y:{2}".format(self.headers['rows'][index], index , rowDepth))
-			self.printfunction(self.headers['rows'][index], index , rowDepth , False, 1, self.row_header_style)
+			self.printfunction(self.headers['rows'][index], index , count_of_header_rows , False, 1, self.row_header_style)
 		self.rowTd.fillPrintGrid(1, True, self.printfunction)
 		self.colTd.fillPrintGrid(1, False, self.printfunction)
 
@@ -424,11 +421,11 @@ class SingleTab:
 		if self.ptdict.ySize < py + 1:
 			self.ptdict.ySize = py +1
 
-class Pyvotab:
+class PyvoStyles:
 
-	def __init__(self, old_style, new_style, change_style, row_header_style, col_header_style, layout, debug= False):
+	def __init__(self, old_style, new_style, change_style, row_header_style, col_header_style):
 		'''
-		Creates a Pyvotab object
+		Contains a pre- defined set of styles
 
 		Parameters
 		----------
@@ -440,41 +437,71 @@ class Pyvotab:
 		col_header_style : Object
 			The style objects defines how the cells should be formated in the final table. These objects are not used or mofified 
 			by pyvotab at all, there are only passed through into the result table to allow the user to define the wanted formats
-		page: int or string
-				If int, it's define the column which should be used as page. If string, it's handled as single page, refered py the page name
-		layout : dict or string
-			contains the layout parameters, either in an url coded string or an dict. The parameter are
-				page: int or string
-						If int, it's define the column which should be used as page. If string, it's handled as single page, refered py the page name
-				source: string
-					name of the excel sheet which should be used as data table source, can be read by get_source_name(). Only needed when handle e.g. excel files
-					not used by pivotab itself
-					Optional, default pt.1
-				template: string
-					name of an excel table sheet which should be used as empty but pre-formated sheet to fill the data in
-					not used by pivotab itself
-					optional, default is to create an fresh sheet
-				newname: string
-					definition of how the output page name shall be formed. Inside of newname a $ acts as place holder, so newname = "page_$" and original page name of "org" becomes "page_orig"
-					Optional, default $
-				rows: Array of int
-					defines the column indices which shall be used as rows
-				cols: Array of int
-					defines the column indices which shall be used as columns
-				filter: 
-					no idea for now, reserved for later extensions :-)
-				pivot: string
-					defines the pivot calculation method. 'plain' is the standard value for no special operation
 		'''
-		
-		self.result_tables={}
 		self.old_style = old_style
 		self.new_style = new_style
 		self.change_style = change_style
 		self.row_header_style = row_header_style
 		self.col_header_style = col_header_style
+
+class Pyvotab:
+
+	def __init__(self, pyvo_styles, layout, debug= False):
+		'''
+		Creates a Pyvotab object
+
+		Parameters
+		----------
+		
+		pyvo_styles: PyvoStyles
+
+			The styles object defines how the cells should be formated in the final table. These objects are not used or mofified 
+			by pyvotab at all, there are only passed through into the result table to allow the user to define the wanted formats
+		
+		page: int or string
+		
+				If int, it's define the column which should be used as page. If string, it's handled as single page, refered py the page name
+		
+		layout : dict or string
+			contains the layout parameters, either in an url coded string or an dict. The parameter are
+		
+				page: int or string
+						If int, it's define the column which should be used as page. If string, it's handled as single page, refered py the page name
+		
+				source: string
+					name of the excel sheet which should be used as data table source, can be read by get_source_name(). Only needed when handle e.g. excel files
+					not used by pivotab itself
+					Optional, default pt.1
+		
+				template: string
+					name of an excel table sheet which should be used as empty but pre-formated sheet to fill the data in
+					not used by pivotab itself
+					optional, default is to create an fresh sheet
+		
+				newname: string
+					definition of how the output page name shall be formed. Inside of newname a $ acts as place holder, so newname = "page_$" and original page name of "org" becomes "page_orig"
+					Optional, default $
+		
+				rows: Array of int
+					defines the column indices which shall be used as rows
+		
+				cols: Array of int
+					defines the column indices which shall be used as columns
+		
+				filter: 
+					no idea for now, reserved for later extensions :-)
+		
+				pivot: string
+					defines the pivot calculation method. 'plain' is the standard value for no special operation
+		'''
+		
+		self.result_tables={}
+		self.old_style = pyvo_styles.old_style
+		self.new_style = pyvo_styles.new_style
+		self.change_style = pyvo_styles.change_style
+		self.row_header_style = pyvo_styles.row_header_style
+		self.col_header_style = pyvo_styles.col_header_style
 		if type(layout) is str:
-			print("layout is string..",layout)
 			layout=self.resolve_parameter_url(layout)
 		self.page = self.get_url_parameter(layout,"page","default")
 		try: # is the page a string or an integer representation? if yes, convert it to int
@@ -532,20 +559,19 @@ class Pyvotab:
                         between the different sources!
                         Reference to tell the user where the resulting table cells are coming from
 		'''
-
+		print("InsertTable",repr(table))
 		header_names=table[0]
 		headers={'rows':[],'cols':[]}
 		for index in self.layout['rows']:
 			headers['rows'].append( str( header_names[ index - 1 ] ) )
 		for index in self.layout['cols']:
 			headers['cols'].append( str( header_names[ index - 1 ] ) )
-
 		for row in table[1:]:
 			rowHash = ""
 			colHash = ""
 			# is the page an int or a string, so single page or multipage
 			if type(self.page) is int:
-				page_name=row[self.page-1]
+				page_name=str(row[self.page-1])
 			else:
 				page_name=str(self.page)
 			# does that page table already exist?
@@ -592,10 +618,9 @@ class Pyvotab:
 			stab.getPrintDict()
 			result[page_name]=stab#.ptdict
 		pyvoSheet_results=[]
-		print(repr(result.keys()))
 		for page_name in sorted(result.keys()):
-			pyvoSheet_results.append(pyvoSheet(self.newname.replace('$',page_name), result[page_name].ptdict, result[page_name].get_sheet_style(), self.template))
-			print("Remember: correct sheet style not implemented yet")
+			pyvoSheet_results.append(PyvoSheet(self.newname.replace('$',str(page_name)), result[page_name].ptdict, result[page_name].get_sheet_style(), self.template))
+			print("adding page{0}".format(page_name))
 		return pyvoSheet_results
 
 	def resolve_parameter_url(self, url):
@@ -627,7 +652,6 @@ class Pyvotab:
 		-------
 		res: ParseResult object
 		'''
-		print (param_object)
 		if not param_name in param_object:
 			return default_value
 		else:

@@ -1,18 +1,16 @@
-import sys
 import os
-from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog, QTabWidget, QWidget
+import sys
+
+import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QObject, pyqtSlot
-import xlrd 
-from xlrd import XLRDError
-import numpy as np
-import pandas as panda
-from pandas import ExcelWriter
-from pandas import ExcelFile
-from pyvotab import Pyvotab, pyvoSheet
+from PyQt5.QtWidgets import (QApplication, QDialog, QFileDialog, QTabWidget,
+                             QWidget)
+
 from ptViewer_ui import Ui_MainWindow
 from ptWriter import PtWriter
-from openpyxl.styles import Border, Side, PatternFill, Font, GradientFill, Alignment
+from pyvotab import Pyvotab, PyvoSheet,PyvoStyles
+
 
 class Main(object):
 
@@ -60,16 +58,17 @@ class Main(object):
 		self.ui.save_file_pushButton.clicked.connect(self.saveAs)
 
 		self.ui.label_2.setText("Please press the \"Add\"-Button and select your files to compare.")
-		self.entry = QtGui.QStandardItemModel()
-		self.ui.file_list_listView.setModel(self.entry)
+		self.input_file_list = QtGui.QStandardItemModel()
+		self.ui.file_list_listView.setModel(self.input_file_list)
 		self.ui.file_list_listView.clicked[QtCore.QModelIndex].connect(self.on_clicked)      
 
-		self.index = 0 
-		self.pyvotab_list = []
-		self.view_list = []
+		self.index = None
+		self.pyvotab_sheet_list = []
+		self.view_sheet_list = []
 		self.first_Click = False  	#Bugfix fuer Up-Down-Button bevor ein Element ausgewaehlt wurde
 		self.savable = False 	#SaveAs darf nur nach "savable" aufgerufen werden
-		
+		self.pyvotab_writer=PtWriter('xls')
+
 		
 
 	def on_clicked(self, index):
@@ -92,7 +91,7 @@ class Main(object):
 		self.first_Click = True
 		self.savable = False
 		self.index = index
-		item = self.entry.itemFromIndex(index)
+		item = self.input_file_list.itemFromIndex(index)
 		self.show_Matrix(item)
 		self.ui.label_2.setText("Please write a command into the input field or press the \"Calculate\"-Button.")
 	
@@ -115,13 +114,9 @@ class Main(object):
 		"""
 		
 		self.ui.excel_tabWidget.clear()
-		data_file = panda.ExcelFile(item.text())	
 
-		for element in data_file.sheet_names:
-
-			data_file_element = panda.read_excel (data_file, element)
+		for tab_name,data_file_element in self.pyvotab_writer.load(item.text()).items():
 			list = data_file_element.as_matrix()
-			
 			header = data_file_element.head()
 			self.table_view= QtGui.QStandardItemModel(len(list),len(header)-1) # zeile, spalte
 			self.table_view.setHorizontalHeaderLabels(header)
@@ -130,9 +125,9 @@ class Main(object):
 					item = QtGui.QStandardItem(str(list[i][j]))
 					self.table_view.setItem(i, j, item)
 				
-			self.add_Tab(element)
-			
-		
+			self.add_Tab(tab_name)
+
+
 		
 	def show_Matrix_Sheet(self, update_tupel):
 
@@ -223,9 +218,9 @@ class Main(object):
 		if file_name:
 			for file in file_name:
 				it = QtGui.QStandardItem(file)
-				self.entry.appendRow(it)
+				self.input_file_list.appendRow(it)
 
-			point = self.entry.item(self.entry.rowCount()-1)
+			point = self.input_file_list.item(self.input_file_list.rowCount()-1)
 			self.ui.file_list_listView.setCurrentIndex(point.index())
 			self.index = point.index()
 			self.show_Matrix(point)
@@ -251,13 +246,13 @@ class Main(object):
 		no value
 		"""	
 		
-		if(self.first_Click):
-			item = self.entry.itemFromIndex(self.index)
+		if self.first_Click:
+			item = self.input_file_list.itemFromIndex(self.index)
 			position = item.row()
 			if position > 0:
-				item2 = self.entry.takeItem(item.row()-1)
-				self.entry.setItem(position-1, self.entry.takeItem(item.row()))
-				self.entry.setItem(position, item2)
+				item2 = self.input_file_list.takeItem(item.row()-1)
+				self.input_file_list.setItem(position-1, self.input_file_list.takeItem(item.row()))
+				self.input_file_list.setItem(position, item2)
 				self.ui.file_list_listView.setCurrentIndex(item.index())
 				self.index = item.index()
 				self.show_Matrix(item)
@@ -281,13 +276,13 @@ class Main(object):
 		no value
 		"""		
 	
-		if(self.first_Click):
-			item = self.entry.itemFromIndex(self.index)
+		if self.first_Click:
+			item = self.input_file_list.itemFromIndex(self.index)
 			position = item.row()
-			if position < self.entry.rowCount()-1:
-				item2 = self.entry.takeItem(item.row()+1)
-				self.entry.setItem(position+1, self.entry.takeItem(item.row()))
-				self.entry.setItem(position, item2)
+			if position < self.input_file_list.rowCount()-1:
+				item2 = self.input_file_list.takeItem(item.row()+1)
+				self.input_file_list.setItem(position+1, self.input_file_list.takeItem(item.row()))
+				self.input_file_list.setItem(position, item2)
 				self.ui.file_list_listView.setCurrentIndex(item.index())
 				self.index = item.index()
 				self.show_Matrix(item)
@@ -311,19 +306,19 @@ class Main(object):
 		no value
 		"""			
 		
-		if(self.first_Click):
-			item = self.entry.itemFromIndex(self.index)
+		if self.first_Click:
+			item = self.input_file_list.itemFromIndex(self.index)
 			row = self.index.row()
-			self.entry.removeRow(item.row())
+			self.input_file_list.removeRow(item.row())
 			self.savable = False
 			self.ui.excel_tabWidget.clear()
 			if row != 0:
-				if row >= self.entry.rowCount():
-					row = self.entry.rowCount()-1
+				if row >= self.input_file_list.rowCount():
+					row = self.input_file_list.rowCount()-1
 
-				self.ui.file_list_listView.setCurrentIndex(self.entry.item(row).index())
-				self.index = self.entry.item(row).index()
-				self.show_Matrix(self.entry.item(row))
+				self.ui.file_list_listView.setCurrentIndex(self.input_file_list.item(row).index())
+				self.index = self.input_file_list.item(row).index()
+				self.show_Matrix(self.input_file_list.item(row))
 				
 	def isValidInput(self, string_text):
 	
@@ -334,11 +329,11 @@ class Main(object):
 		#//?page=1&rows=2&newname=$_otg&cols=3,4&val=5
 		#//?page=1&rows=1,2,3,4,5,6,7,8,9,10,11,12&newname=$_otg&cols=13,14,15&val=16
 	
-		if(not string_text):
+		if not string_text:
 			self.ui.label_2.setText("No input in field.")
 			return False
 			
-		if("page" in string_text and "rows" in string_text and "cols" in string_text and "val" in string_text):
+		if "page" in string_text and "rows" in string_text and "cols" in string_text and "val" in string_text:
 		
 			#page
 			substring = ""
@@ -416,22 +411,19 @@ class Main(object):
 		no value
 		"""		
 	
-		if(not self.first_Click):
+		if not self.first_Click:
 			return
 
-		input_text = self.ui.expression_lineEdit.text()
-		valid_input = False
-		if(input_text.strip()):
-			valid_input =True
-			
+		input_text = self.ui.expression_lineEdit.text().strip()
+
 		self.ui.label_2.setText("Calculation is in progress...")	
 		
 		self.ui.excel_tabWidget.clear() #refresh
 		item = QtGui.QStandardItem()
 		self.ui.excel_tabWidget.clear()
-		self.view_list.clear()
-		self.pyvotab_list.clear()
-		indexnr = self.index.row()
+		self.view_sheet_list.clear()
+		self.pyvotab_sheet_list.clear()
+		selected_file_row_index = self.index.row()
 		white={'internal_style':QtGui.QBrush(QtGui.QColor(255, 255, 255)),'xls':"FFFFFF"} 
 		red={'internal_style':QtGui.QBrush(QtGui.QColor(255, 0, 0)),'xls':"FF0000"} 
 		green={'internal_style':QtGui.QBrush(QtGui.QColor(0, 255, 0)) ,'xls':"00FF00"} 
@@ -441,105 +433,33 @@ class Main(object):
 		lightblue={'internal_style':QtGui.QBrush(QtGui.QColor(100, 100, 255)) ,'xls':"8080FF"} 
 		yellow={'internal_style':QtGui.QBrush(QtGui.QColor(255, 255, 0)) ,'xls':"FFFF00"} 
 
-		
-		'''
-		Beginn der Ausfuehrung
-		'''
-		pyvotab_is_in_list = False
-		save_list = []
-		pyvotab_tuple = 0
-		pyvotab = 0
-				
-		citem = self.entry.item(indexnr)
-		data_file = panda.ExcelFile(citem.text())			
-		
-		#für jedes sheet des dateipfads in pyvotab_list speichern
-		for excelSheetname in data_file.sheet_names:
+		if selected_file_row_index == 0 :
+			pyvo_style = PyvoStyles(white, white, orange, yellow, lightblue)
+		else:	
+			pyvo_style = PyvoStyles(red, green, orange, yellow, lightblue)
 
-			data_file_element = panda.read_excel (data_file, excelSheetname)
-			save_list = data_file_element.as_matrix()
-			header = []
-			for col in data_file_element.columns:
-				header.append(col)
-			
-			#eingabebefehl in pyvotab speichern
-			if(excelSheetname == "pyvotab"):
-				pyvotab_is_in_list = True
-				if(valid_input):
-					save_list = np.append(save_list, [[input_text]], axis=0)	
-
-			save_list = np.append([header], save_list, axis=0)
-			pyvo = pyvoSheet(excelSheetname, save_list, white, None)
-			self.view_list.append(pyvo)
-			
-			if(excelSheetname == "pyvotab"):
-				self.pyvotab_list.append(pyvo)
-			
-		
-		#neues pyvotabsheet erstellen
-		if(not pyvotab_is_in_list):
-			header = [["layout"]]
-			save_list[[]]
-			if(valid_input):
-				save_list = [[input_text]]
-			save_list = np.append([header], save_list, axis=0)
-			pyvo = pyvoSheet("pyvotab", save_list, "white", None)
-			self.view_list.append(pyvo)
-			self.pyvotab_list.append(pyvo)
-
-
-		#Unterscheidung zwischen Abarbeiten aller Befehle vom Pyvotab und nur das Abarbeiten der Eingabe
-		for pyvo in self.view_list:
-			if(pyvo.name == "pyvotab"):
-				if(valid_input):
-					save_list = [["layout"],[input_text]]
-				else:
-					save_list = pyvo.table
-				pyvotab_tuple = save_list
+		# todo: Diese Schleife geht doch auch einfacher, oder?
+		input_file_name_list=[]
+		for i in range(self.input_file_list.rowCount()):
+			if i > selected_file_row_index :
 				break
-					
-		#Alle Befehle in pyvotab_tuple werden abgearbeitet		
-		for i in range(1,len(pyvotab_tuple)):
-			if(type(pyvotab_tuple[i][0]) is str):
-				if(indexnr == 0):
-					pyvotab = Pyvotab(white, white, blue, yellow, lightblue, pyvotab_tuple[i][0], debug=False)
-				else:	
-					pyvotab = Pyvotab(red, green, blue, yellow, lightblue, pyvotab_tuple[i][0], debug=False)
-					
-				pt_name=pyvotab.get_url_parameter(pyvotab.layout,"source","pyvotab.1")
-				for i in range(self.entry.rowCount()):
-
-					if(i > indexnr):
-						break
-						
-					citem = self.entry.item(i)
-					data_file = panda.ExcelFile(citem.text())	
-					data_file_element = panda.read_excel (data_file, pt_name)
-					matrixlist = data_file_element.as_matrix().tolist()
-					matrixlist.insert(0, list(data_file_element))	
-					
-					#wenn die dateipfäde älter sind als der markierte dateipfad der liste
-					if(citem.index().row() < indexnr):
-						pyvotab.InsertTable( matrixlist, False, default)
-					else:
-						pyvotab.InsertTable( matrixlist, True, default)
-
-					
-				printDict = pyvotab.getPrintDict() # add result to global result table				
-				self.pyvotab_list +=	printDict	
-				self.view_list += printDict
+			selected_file_item = self.input_file_list.item(i)
+			input_file_name_list.append(selected_file_item.text())
 		
+
+		self.pyvotab_sheet_list ,self.view_sheet_list  = self.calculate_pytabs( input_file_name_list, [input_text], pyvo_style)
+
 		self.table_view= QtGui.QStandardItemModel() # noetig, wenn pyvotab_list keine sheets enthaelt
 
-		for pyvot_sheet in self.view_list:
-		
+
+		##### Write the results into the QTable
+
+		for pyvot_sheet in self.view_sheet_list:
 			sheetname=pyvot_sheet.name
 			pt_table=pyvot_sheet.table
-				
 			self.table_view= QtGui.QStandardItemModel() # zeile, spalte
-
 			try:
-				self.table_view.setHorizontalHeaderLabels(header)
+				#self.table_view.setHorizontalHeaderLabels(header)
 				for row in range(pt_table.ySize):
 					for col in range(pt_table.xSize):
 						try:
@@ -559,10 +479,98 @@ class Main(object):
 		self.savable = True
 		self.ui.label_2.setText("You can save your calculation now with the \"Save as...\"-Button.")		
 
+	def calculate_pytabs(self, file_name_list, local_layout_string_list, pyvot_style):
+		'''
+		Calculates the new pyvotabs out of a given set of excel input files
+
+		Parameters
+		----------
 		
+		file_name_list: List of file names
+
+			List of pyvotab excel files which should be overlayed. The last file in the list contains the pyvotab layout instructions to be used
+			and is used as template for the final output file
+		
+		local_layout_string_list: List of layout string
+		
+				Additional layout strings (optional), which are calculated on top of the ones which are already in the excel table
+
+		pyvot_style : PyvotStyle
+
+			contains the different format styles to highlight some different changes in the result tables
+		'''
+
+		if not file_name_list:
+			return {} # no input, so no output
+		
+		layout_list_sheet = []
+		view_sheet_list=[]
+		pyvotab_sheet_list =[]
+
+		# für jedes Sheet in der selektierten Datei
+		for excelSheetname , data_file_element in self.pyvotab_writer.load(file_name_list[-1]).items(): # open the last file in list
+			#für jedes sheet des dateipfads in pyvotab_list speichern
+			this_sheet = data_file_element.as_matrix()
+			header = []
+			for col in data_file_element.columns:
+				header.append(col)
+			#eingabebefehl in pyvotab speichern
+			if excelSheetname == "pyvotab":
+				layout_list_sheet = this_sheet
+				print("layout_list_sheet gefunden",repr(layout_list_sheet))
+				if local_layout_string_list:
+					layout_list_sheet = np.append(this_sheet, [local_layout_string_list], axis=0)	
+			this_sheet = np.append([header], this_sheet, axis=0)
+			pyvo = PyvoSheet(excelSheetname, this_sheet, None, None)
+			view_sheet_list.append(pyvo)
+			if excelSheetname == "pyvotab" or excelSheetname.startswith("pt."):
+				pyvotab_sheet_list.append(pyvo)
+		#neues pyvotabsheet erstellen
+		# https://stackoverflow.com/a/11295857
+		if layout_list_sheet.size==0:
+			header = [["layout"]]
+			layout_list_sheet[[]]
+			if local_layout_string_list:
+				layout_list_sheet = [[local_layout_string_list]]
+			layout_list_sheet = np.append([header], layout_list_sheet, axis=0)
+			pyvo = PyvoSheet("pyvotab", layout_list_sheet, None, None)
+			view_sheet_list.append(pyvo)
+			pyvotab_sheet_list.append(pyvo)
+
+
+
+		'''
+		#Unterscheidung zwischen Abarbeiten aller Befehle vom Pyvotab und nur das Abarbeiten der Eingabe
+		for pyvo in view_list:
+			if pyvo.name == "pyvotab":
+				if local_layout_string_list:
+					layout_list_sheet = [["layout"],[local_layout_string_list]]
+				else:
+					layout_list_sheet = pyvo.table
+				break
+		'''
+		#Alle Befehle in save_list werden abgearbeitet	
+		for actual_layout_string in map(lambda cell : cell[0], layout_list_sheet):
+			if type(actual_layout_string) is str and not actual_layout_string=="":
+				pyvotab = Pyvotab(pyvot_style, actual_layout_string, debug=False)	
+				pt_name=pyvotab.get_url_parameter(pyvotab.layout,"source","pt.1")
+				last_file_name=file_name_list[-1]
+				for actual_file_name in file_name_list:
+					try: 
+						data_file_element = self.pyvotab_writer.load(actual_file_name)[pt_name]
+						header =list(data_file_element.columns)
+						save_list=data_file_element.as_matrix()
+						save_list=np.append([header] , save_list,axis =0)
+						pyvotab.InsertTable( save_list.tolist(), last_file_name==actual_file_name, None)
+					except:
+						print("Error: Can not load pivotab Sheet {0}",pt_name)
+				printDict = pyvotab.getPrintDict() # add result to global result table				
+				pyvotab_sheet_list +=	printDict	
+				view_sheet_list += printDict
+		return pyvotab_sheet_list , view_sheet_list
 		
 	def saveAs(self):
-	
+
 		"""Save result of calculated files 
 
 		Save the result of all calculated
@@ -578,20 +586,16 @@ class Main(object):
 		no value
 		"""		
 	
-		if(not self.savable):
+		if not self.savable:
 			return
-		
 		self.ui.label_2.setText("Saving is in progress...")	
 		options = QFileDialog.Options()
 		options |= QFileDialog.DontUseNativeDialog
 		file_name, _ = QFileDialog.getSaveFileName(self.MainWindow, "QFileDialog.getSaveFileName()","","Excel Files (*.xlsx *xlsm *.xls);; All Files (*)", options=options)
 		if file_name:
-			pyvotab_writer=PtWriter('xls')
-			citem = self.entry.item(self.index.row())
-			pyvotab_writer.save(self.pyvotab_list, citem.text(), file_name, {})
-
+			citem = self.input_file_list.item(self.index.row())
+			self.pyvotab_writer.save(self.pyvotab_sheet_list, citem.text(), file_name, {})
 		self.ui.label_2.setText("Saving finished!")	
-	
 	
 	
 	def show(self):
