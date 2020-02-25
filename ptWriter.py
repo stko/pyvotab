@@ -31,6 +31,13 @@ class PtWriter:
 			print("Can't save in plugin "+self.plugin_name)
 			traceback.print_exc(file=sys.stdout)
 	
+	def calculate_pyvotab_files(self, file_name_list, local_layout_string_list, pyvot_style):
+		try:
+			return self.plugin.calculate_pyvotab_files( file_name_list, local_layout_string_list, pyvot_style)
+		except :
+			print("Can't calculate_pyvotab_files in plugin "+self.plugin_name)
+			traceback.print_exc(file=sys.stdout)
+	
 		
 
 if __name__ == "__main__":
