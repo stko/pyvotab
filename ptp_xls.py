@@ -151,7 +151,6 @@ class ptPlugin:
 			#eingabebefehl in pyvotab speichern
 			if excelSheetname == "pyvotab":
 				layout_list_sheet = this_sheet
-				print("layout_list_sheet gefunden",repr(layout_list_sheet))
 				if local_layout_string_list:
 					layout_list_sheet = numpy.append(this_sheet, [local_layout_string_list], axis=0)	
 			this_sheet = numpy.append([header], this_sheet, axis=0)

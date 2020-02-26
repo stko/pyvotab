@@ -1,7 +1,8 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 import os
 import sys
 
-import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QObject, pyqtSlot
 from PyQt5.QtWidgets import (QApplication, QDialog, QFileDialog, QTabWidget,
@@ -9,7 +10,7 @@ from PyQt5.QtWidgets import (QApplication, QDialog, QFileDialog, QTabWidget,
 
 from ptViewer_ui import Ui_MainWindow
 from ptWriter import PtWriter
-from pyvotab import Pyvotab, PyvoSheet,PyvoStyles
+from pyvotab import PyvoStyles
 
 
 class Main(object):
@@ -466,9 +467,12 @@ class Main(object):
 							cell_content=pt_table[col][row]
 							if cell_content:
 								item = QtGui.QStandardItem(str(cell_content["value"]))
-								this_style=cell_content["style"]['internal_style']
-								if this_style:
-									item.setBackground(this_style)
+								try:
+									this_style=cell_content["style"]['internal_style']
+									if this_style:
+										item.setBackground(this_style)
+								except:
+									pass # no style set
 								self.table_view.setItem(row, col, item)
 						except KeyError:
 							pass
