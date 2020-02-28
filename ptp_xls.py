@@ -24,13 +24,12 @@ class ptPlugin:
 
 
 	def save(self, tables, input_file_name, file_name, options):
-		print("plugin:",file_name)
 		if not file_name.lower().endswith('.xlsx'):
 			file_name = file_name+".xlsx"
 
 		try:
 			wb = load_workbook(input_file_name)
-		except FileNotFoundError:
+		except:
 			wb = Workbook()
 			wb.remove_sheet(wb.active)
 			pass
@@ -196,7 +195,7 @@ class ptPlugin:
 						save_list= numpy.append([header] , save_list,axis =0)
 						pyvotab.InsertTable( save_list.tolist(), last_file_name==actual_file_name, None)
 					except:
-						print("Error: Can not load pivotab Sheet {0}",pt_name)
+						print("Error: Can not load pivotab Sheet {0}".format(pt_name))
 				printDict = pyvotab.getPrintDict() # add result to global result table				
 				pyvotab_sheet_list +=	printDict	
 				view_sheet_list += printDict
