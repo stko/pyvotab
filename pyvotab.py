@@ -381,10 +381,8 @@ class SingleTab:
 
 		'''
 
-		#self.rowTd.calPrintCoords(self.colTd.depth(1), 0, True)
-		#self.colTd.calPrintCoords(self.rowTd.depth(1), 0, False)
-		self.rowTd.calPrintCoords(self.rowTd.depth(1), 0, True)
-		self.colTd.calPrintCoords(self.colTd.depth(1), 0, False)
+		self.rowTd.calPrintCoords(self.colTd.depth(1), 0, True)
+		self.colTd.calPrintCoords(self.rowTd.depth(1), 0, False)
 
 	def getPrintDict(self):
 		''' translates the internal data tree structure with it's calculated x/y positions (by layoutgrid()) into its x/y table representation for printout
@@ -394,9 +392,9 @@ class SingleTab:
 		count_of_header_cols = self.headercols()
 		self.ptdict = ptPrintDict()
 		for index in range(len(self.headers['cols'])):
-			self.printfunction(self.headers['cols'][index], count_of_header_cols-1 , index , False, 1, self.col_header_style)
+			self.printfunction(self.headers['cols'][index], count_of_header_rows-1 , index , False, 1, self.col_header_style)
 		for index in range(len(self.headers['rows'])):
-			self.printfunction(self.headers['rows'][index], index , count_of_header_rows , False, 1, self.row_header_style)
+			self.printfunction(self.headers['rows'][index], index , count_of_header_cols , False, 1, self.row_header_style)
 		self.rowTd.fillPrintGrid(1, True, self.printfunction)
 		self.colTd.fillPrintGrid(1, False, self.printfunction)
 
