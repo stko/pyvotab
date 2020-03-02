@@ -1,5 +1,6 @@
 *~
 *.xls*
+*.pyc
 __pycache__
 .vscode
 /nbproject/private/
