@@ -557,7 +557,6 @@ class Pyvotab:
                         between the different sources!
                         Reference to tell the user where the resulting table cells are coming from
 		'''
-		print("InsertTable",repr(table))
 		header_names=table[0]
 		headers={'rows':[],'cols':[]}
 		for index in self.layout['rows']:
@@ -618,7 +617,7 @@ class Pyvotab:
 		pyvoSheet_results=[]
 		for page_name in sorted(result.keys()):
 			pyvoSheet_results.append(PyvoSheet(self.newname.replace('$',str(page_name)), result[page_name].ptdict, result[page_name].get_sheet_style(), self.template))
-			print("adding page{0}".format(page_name))
+			print("adding page {0}".format(page_name))
 		return pyvoSheet_results
 
 	def resolve_parameter_url(self, url):
