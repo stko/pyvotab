@@ -435,9 +435,9 @@ class Main(object):
 		yellow={'internal_style':QtGui.QBrush(QtGui.QColor(255, 255, 0)) ,'xls':"FFFF00"} 
 
 		if selected_file_row_index == 0 :
-			pyvo_style = PyvoStyles(white, white, orange, yellow, lightblue)
+			pyvo_style = PyvoStyles(white, white, yellow, orange, lightblue)
 		else:	
-			pyvo_style = PyvoStyles(red, green, orange, yellow, lightblue)
+			pyvo_style = PyvoStyles(red, green, yellow, orange, lightblue)
 
 		# todo: Diese Schleife geht doch auch einfacher, oder?
 		input_file_name_list=[]
