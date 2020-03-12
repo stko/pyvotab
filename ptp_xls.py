@@ -1,10 +1,11 @@
 import re
 from openpyxl import Workbook
 from openpyxl import load_workbook
-from openpyxl.styles import Border, Side, PatternFill, Font, GradientFill, Alignment
+from openpyxl.styles import Border, Side, PatternFill, Font, GradientFill, Alignment , Protection
 import pandas 
 import numpy
 from pyvotab import Pyvotab, PyvoSheet,PyvoStyles
+from copy import copy
 
 class ptPlugin:
 
@@ -52,6 +53,8 @@ class ptPlugin:
 				for datasheet in wb:
 					if(datasheet.title == template):
 						ws = wb.copy_worksheet(datasheet)
+						template_rows=ws.max_row
+						template_cols=ws.max_column
 						ws.title = sheet_name
 						isSheetAvailable = True
 
@@ -71,9 +74,21 @@ class ptPlugin:
 								this_cell.value="{0}".format(str(cell_content["value"]))
 								try:
 									this_style=cell_content["style"][self.plugin_id]
+									# copy style from outer borders of the template sheet, if given
+									if template:
+										if col >= template_cols or row >=template_rows: # we are outside the template borders
+											template_style_cell = ws.cell(column=min([col+1,template_cols]), row=min([row+1,template_rows]))
+											this_cell.font = copy(template_style_cell.font)
+											this_cell.border = copy(template_style_cell.border)
+											this_cell.alignment = copy(template_style_cell.alignment)
+											this_cell.number_format = copy(template_style_cell.number_format)
+											this_cell.protection = copy(template_style_cell.protection)
 									if this_style:
 										#this_cell.fill = PatternFill("solid", fgColor=this_style)
 										this_cell.fill = PatternFill("lightDown", fgColor=this_style)
+									else:
+										if template:
+											this_cell.fill = template_style_cell.fill
 								except:
 									pass
 								if cell_content["size"]>1:
