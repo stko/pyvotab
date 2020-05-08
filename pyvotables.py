@@ -169,8 +169,8 @@ def layout_tables(pt_tables,layout_string_array):
 			pt_name=pyvotab_model.get_url_parameter(pyvotab_model.layout,"source","pt.1")
 			try: 
 				pyvotab_model.InsertTable( pt_tables[pt_name], False, None)
-			except:
-				print("Error: Can not load pivotab Sheet {0}".format(pt_name))
+			except Exception as e:
+				print("Error: Can not load pivotab Sheet {0}:{1}".format(pt_name,str(e)))
 			printDict = pyvotab_model.getPrintDict() # add result to global result table				
 			pyvotab_sheet_list +=	printDict	
 
