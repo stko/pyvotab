@@ -3,6 +3,8 @@ import enum
 from urllib.parse import urlparse, parse_qs
 import sys
 
+import pdsupport
+
 # creating enumerations using class 
 class States(enum.Enum): 
 	old = 0
@@ -514,6 +516,11 @@ class Pyvotab:
 		layout['rows'] = self.split_int_string( self.get_url_parameter(layout,"rows",[]))
 		layout['cols'] = self.split_int_string( self.get_url_parameter(layout,"cols",[]))
 		layout['val'] = int(self.get_url_parameter(layout,"val",1))
+		layout['pivot_rows'] = self.split_int_string( self.get_url_parameter(layout,"p_rows",layout['rows'] ))
+		layout['pivot_cols'] = self.split_int_string( self.get_url_parameter(layout,"p_cols",layout['cols']))
+		layout['pivot_val'] = int(self.get_url_parameter(layout,"p_val",layout['val']))
+		layout['pivot'] = self.get_url_parameter(layout,"pivot",'plain').split(',')
+		self.is_pivot_operation = layout['pivot']!=['plain']
 		self.layout = layout
 		self.debug = debug
 
@@ -557,6 +564,8 @@ class Pyvotab:
                         between the different sources!
                         Reference to tell the user where the resulting table cells are coming from
 		'''
+		if self.is_pivot_operation:
+			table= pdsupport.calculate_pivot(table,self.layout)
 		header_names=table[0]
 		headers={'rows':[],'cols':[]}
 		for index in self.layout['rows']:

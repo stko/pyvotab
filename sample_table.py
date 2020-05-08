@@ -45,7 +45,8 @@ t6 = [ # = t2 with column header
 ]
 
 pts= PyvoStyles('lightgrey','lightgreen','yellow','lightblue', 'aquamarine')
-pt = Pyvotab(pts, { 'page': 3, 'rows' : [ 3,4 ], 'cols' : [2, 1], 'val' : 5 , 'filter': None, 'pivot': 'plain'}, debug=True)
+#pt = Pyvotab(pts, { 'page': 3, 'rows' : [ 3,4 ], 'cols' : [2, 1], 'val' : 5 , 'filter': None, 'pivot': 'plain'}, debug=True)
+pt = Pyvotab(pts, { 'page': 3, 'rows' : [ 2 ], 'cols' : [3], 'val' : 5 , 'filter': None, 'pivot': 'pivot'}, debug=True)
 
 pt.InsertTable( t5, False, "white")
 pt.InsertTable( t6, True, "white")
