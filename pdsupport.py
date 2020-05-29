@@ -15,6 +15,7 @@ def calculate_pivot(table,layout):
 	print(df1)
 	index=[]
 	pivot_header=['Pivot'] # this array is needed to calculate the header colnmn names for the final calculated pivot table
+	pivot_header.append(headers[layout['pivot_val']-1]) # the second colums contains the name of the original colums from where the value is taken
 	columns=[]
 	for col in layout['pivot_cols']:
 		columns.append(headers[col-1])
@@ -59,8 +60,11 @@ def calculate_pivot(table,layout):
 	for element, element_values in pivot_res.items():
 		for value_name,value in element_values.items():
 			if not pd.isnull(value):
-				line=list(element)
-				line.append(value_name)
+				line=list(element) # element is a list of one or more cell contents
+				if type(value_name) is str:
+					line.append(value_name)
+				else:
+					line.extend(value_name) # value_name is a list of one or more cell contents
 				line.append(str(value))
 				print("\t".join(line))
 				res.append(line)

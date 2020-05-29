@@ -209,8 +209,8 @@ class ptPlugin:
 						save_list=data_file_element.as_matrix()
 						save_list= numpy.append([header] , save_list,axis =0)
 						pyvotab.InsertTable( save_list.tolist(), last_file_name==actual_file_name, None)
-					except:
-						print("Error: Can not load pivotab Sheet {0}".format(pt_name))
+					except Exception as e:
+						print("Error: Can not load pivotab Sheet {0}: error {1}".format(pt_name,str(e)))
 				printDict = pyvotab.getPrintDict() # add result to global result table				
 				pyvotab_sheet_list +=	printDict	
 				view_sheet_list += printDict
