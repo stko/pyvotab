@@ -11,8 +11,6 @@ def calculate(mylist):
 def calculate_pivot(table,layout):
 	headers=table[0]
 	df1 = pd.DataFrame(table[1:],columns=headers)
-	#print(df1.head(3))
-	print(df1)
 	index=[]
 	pivot_header=['Pivot'] # this array is needed to calculate the header colnmn names for the final calculated pivot table
 	pivot_header.append(headers[layout['pivot_val']-1]) # the second colums contains the name of the original colums from where the value is taken
@@ -24,7 +22,6 @@ def calculate_pivot(table,layout):
 		index.append(headers[row-1])
 		pivot_header.append(headers[row-1])
 	pivot_header.append('Value')
-	print(repr(columns))
 	# calculate the aggretor functions
 	aggfunc=[]
 	for agg_func_name in layout['pivot']:
@@ -48,13 +45,8 @@ def calculate_pivot(table,layout):
 						index=index, 
 						columns=columns,
 						aggfunc=aggfunc)
-	print(df2)
 	arr = df2.values.tolist()
 	cols = df2.columns.tolist()
-	#rows = df2.rows.tolist()
-	print('\nNumpy cols\n----------\n', cols)
-	#print('\nNumpy rows\n----------\n', rows)
-	print('\nNumpy Array\n----------\n', arr)
 	res=[pivot_header] # add the header line to the result
 	pivot_res=df2.to_dict()
 	for element, element_values in pivot_res.items():
@@ -66,6 +58,5 @@ def calculate_pivot(table,layout):
 				else:
 					line.extend(value_name) # value_name is a list of one or more cell contents
 				line.append(str(value))
-				print("\t".join(line))
 				res.append(line)
 	return res
