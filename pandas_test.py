@@ -20,5 +20,6 @@ layout={}
 layout['pivot_rows'] = [2]
 layout['pivot_cols'] = [3]
 layout['pivot_val'] = 5
+layout['pivot'] = ['sum']
 df1 = pdsupport.calculate_pivot(t2,layout)
 print(df1)
