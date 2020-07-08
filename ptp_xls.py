@@ -37,7 +37,7 @@ class ptPlugin:
 		
 		
 		for i in range(len(tables)):
-			sheet_name= re.sub('[^A-Za-z0-9._]+', '', tables[i].name)
+			sheet_name= re.sub('[^A-Za-z0-9._ ]+', '', tables[i].name)
 			pt_table=tables[i].table
 			template = tables[i].template
 
