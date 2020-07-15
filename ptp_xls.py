@@ -158,7 +158,7 @@ class ptPlugin:
 		# für jedes Sheet in der selektierten Datei
 		for excelSheetname , data_file_element in self.load(file_name_list[-1]).items(): # open the last file in list
 			#für jedes sheet des dateipfads in pyvotab_list speichern
-			this_sheet = data_file_element.as_matrix()
+			this_sheet = data_file_element.values
 			header = []
 			for col in data_file_element.columns:
 				header.append(col)
@@ -206,7 +206,7 @@ class ptPlugin:
 					try: 
 						data_file_element = self.load(actual_file_name)[pt_name]
 						header =list(data_file_element.columns)
-						save_list=data_file_element.as_matrix()
+						save_list=data_file_element.values
 						save_list= numpy.append([header] , save_list,axis =0)
 						pyvotab.InsertTable( save_list.tolist(), last_file_name==actual_file_name, None)
 					except Exception as e:

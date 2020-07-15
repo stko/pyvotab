@@ -117,7 +117,7 @@ class Main(object):
 		self.ui.excel_tabWidget.clear()
 
 		for tab_name,data_file_element in self.pyvotab_writer.load(item.text()).items():
-			list = data_file_element.as_matrix()
+			list = data_file_element.values
 			header = data_file_element.head()
 			self.table_view= QtGui.QStandardItemModel(len(list),len(header)-1) # zeile, spalte
 			self.table_view.setHorizontalHeaderLabels(header)
