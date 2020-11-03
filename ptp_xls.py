@@ -1,4 +1,5 @@
 import re
+import functools
 from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.styles import Border, Side, PatternFill, Font, GradientFill, Alignment , Protection
@@ -35,7 +36,18 @@ class ptPlugin:
 			wb.remove_sheet(wb.active)
 			pass
 		
-		
+		# are there any sheets to insert?
+		try:
+			if options:
+				if 'inserttables' in options:
+					for sheet_name,rows in options['inserttables'].items():
+						ws = wb.create_sheet(title=sheet_name)
+						for row in rows:
+							ws.append(row)
+
+
+		except Exception as ex:
+			print("pivotab excel plugin option handle error",str(ex))
 		for i in range(len(tables)):
 			sheet_name= re.sub('[^A-Za-z0-9._ ]+', '', tables[i].name)
 			pt_table=tables[i].table
@@ -111,9 +123,37 @@ class ptPlugin:
 				ws.cell(row=1, column=1).value = "made with pyvotab"
 				ws.cell(row=1, column=1).hyperlink = "https://github.com/stko/pyvotab"
 				ws.cell(row=1, column=1).style = "Hyperlink"	
-			
+		# try to sort all pyvotab tables sheets always to the end of the file
+		#  https://groups.google.com/g/openpyxl-users/c/pUGTSuOOEdE
+		wb._sheets.sort(key= functools.cmp_to_key(self.sort_by_pt_name))
+
 		wb.save(filename = file_name)
-		
+	
+	def sort_by_pt_name(self,x, y):
+		x_name=x.title.lower()
+		y_name=y.title.lower()
+		# pivotab itself is always last
+		if x_name=='pivotab':
+			return 1
+		if y_name=='pivotab':
+			return -1
+		# both pt.names ?
+		if x_name[:3]=='pt.' and x_name[:3]=='pt.':
+			if x_name > y_name:
+				return 1
+			else:
+				return -1
+		# just one is a pt table
+		if x_name[:3]=='pt.':
+			return 1
+		if y_name[:3]=='pt.':
+			return -1
+		# none of them are pt., so we do a normal comparision
+		if x_name > y_name:
+			return 1
+		else:
+			return -1
+
 	def convertToExcelString(self, text):
 		text = re.sub('[^A-Za-z0-9._]+', '', text)
 		return text[:30]
