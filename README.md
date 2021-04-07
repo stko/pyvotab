@@ -1,4 +1,38 @@
-# pyvotab
+# Pyvotab
+Pyvotab is a library and some helping tools to make Excel Worksheets "comparable". When an Excel file is made following the pyvotab design rules or made by one of the pyvotab tools directly, then different versions of this Excel file are comparable, and Pyvotab can either interactively or via command line generate a visual "diff" as new Excel table which shows all differences in a clear and simple representation.
+
+![principle](img/Pivotab_Principle.png)
+
+## The Principle of Pyvotab
+
+### Pyvotab does the table layout
+Unfortuntely Pyvotab does not consists of such a clever artifical inteligence that it could understand by itself the "sense" of each possible excel table :-)
+
+So the trick works as follows:
+
+To be able to compare tables, pyvotab needs to know their structure of how they've been made up. This structure is called _layout_. So each excel file which can be handled by pyvotab contains one or more layout structure information.
+
+Pyvotab also needs to know which data have been used to fill these layouts.
+
+But when knowing the data itself and how the data has to be layouted to fill the different excel sheet, then pyvotab could do the layout by itself.
+
+So that's how pyvotab works when generating the initial excel files: Pyvotab is supplied with the data itself as one or more simple table structures and with one or more layout instructions of how to layout the data onto different excel sheets. Both input data and layout instructions are stored together with the generated excel sheet in the resulting file
+
+### Do a Comparison
+When then Pyvotab compares different versions, it knows the old and old data and the instructions of how to layout them. Then pyvotab first compares the data itself, highlights the differences and layout these marks into the result sheets. 
+
+By that the resulting tables look as before, but they additionally do contain the visual highlighted differences between old and new data.
+
+
+## Pyvotab as tool to generate complex table layouts
+
+As pyvotab has its build-in layout generator, it can help a lot to bring simple data rows from other input sources into a nice format.
+
+So instead that every data provider need to take care by himself of how to layout the data, he simply can fill an excel file with the necessary input data for pyvotab and then uses the pyvotab command line tools to make proper layouts out of it.
+
+Alternatively he can use the pyvotab software library in his own software to generate final layouted tables directly
+
+
 Pyvotab reads data provided in a nested array (other formats are possible, but not implemented yet):
 
 
