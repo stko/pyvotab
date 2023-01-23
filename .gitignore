@@ -3,7 +3,4 @@
 *.pyc
 __pycache__
 .vscode
-/nbproject/private/
-/build/
-*.class
-/dist/
+.venv
