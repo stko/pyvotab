@@ -9,8 +9,8 @@ from PyQt5.QtWidgets import (QApplication, QDialog, QFileDialog, QTabWidget,
                              QWidget)
 
 from ptViewer_ui import Ui_MainWindow
-from ptWriter import PtWriter
-from pyvotab import PyvoStyles
+from pyvotab.pyvotab import PyvoStyles
+from pyvotab.ptwriter import PtWriter
 
 
 class Main(object):

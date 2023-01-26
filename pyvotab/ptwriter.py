@@ -9,7 +9,7 @@ class PtWriter:
 	def __init__(self, plugin_name):
 		try:
 			self.plugin_name=plugin_name
-			myModule=importlib.import_module("ptp_" + plugin_name.lower())
+			myModule=importlib.import_module("pyvotab.ptp_" + plugin_name.lower())
 			myPluginClass=getattr(myModule,"ptPlugin")
 			self.plugin=myPluginClass()
 		except:

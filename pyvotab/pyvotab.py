@@ -3,7 +3,7 @@ import enum
 from urllib.parse import urlparse, parse_qs
 import sys
 
-import pdsupport
+from  .pdsupport import *
 
 # creating enumerations using class 
 class States(enum.Enum): 

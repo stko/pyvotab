@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Border, Side, PatternFill, Font, GradientFill, Alignment , Protection
 import pandas 
 import numpy
-from pyvotab import Pyvotab, PyvoSheet,PyvoStyles
+from pyvotab.pyvotab import Pyvotab, PyvoSheet
 from copy import copy
 
 class ptPlugin:

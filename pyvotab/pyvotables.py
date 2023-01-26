@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from ptWriter import PtWriter
-from pyvotab import PyvoStyles, Pyvotab, PyvoSheet
+from .ptwriter import PtWriter
+from .pyvotab import PyvoStyles, Pyvotab, PyvoSheet
 
 class PyvotDataRow(dict):
 	def __init__(self, pyvot_data_table):

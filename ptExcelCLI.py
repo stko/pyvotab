@@ -4,8 +4,8 @@ import os
 import sys
 import argparse
 
-from ptWriter import PtWriter
-from pyvotab import PyvoStyles
+from pyvotab.ptwriter import PtWriter
+from pyvotab.pyvotab import PyvoStyles
 
 
 		
