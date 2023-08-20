@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import pdsupport
+import pyvotab.pdsupport as pdsupport
 import pandas as pd
 import numpy as np
 

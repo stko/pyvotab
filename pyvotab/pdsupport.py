@@ -13,7 +13,6 @@ def calculate_pivot(table,layout):
 	df1 = pd.DataFrame(table[1:],columns=headers)
 	index=[]
 	pivot_header=['Pivot'] # this array is needed to calculate the header colnmn names for the final calculated pivot table
-	pivot_header.append(headers[layout['pivot_val']-1]) # the second colums contains the name of the original colums from where the value is taken
 	columns=[]
 	for col in layout['pivot_cols']:
 		columns.append(headers[col-1])

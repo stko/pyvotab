@@ -3,7 +3,7 @@ import enum
 from urllib.parse import urlparse, parse_qs
 import sys
 
-from  .pdsupport import *
+from . import  pdsupport
 
 # creating enumerations using class 
 class States(enum.Enum): 
@@ -20,7 +20,7 @@ class PyvoSheet:
 		self.template = template
 
 	def __repr__(self):
-		return {'name':self.name}
+		return f"{{'name':{self.name}}}"
 
 	def __str__(self):
 		return 'pyvoSheet(name='+self.name+ ')'
